@@ -1,0 +1,66 @@
+import api from '../config/api';
+
+export interface School {
+  id: string;
+  name: string;
+  code: string;
+  address?: string;
+  phone?: string;
+  email?: string;
+  logo_url?: string;
+  active: boolean;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface SchoolFormData {
+  name: string;
+  code: string;
+  address?: string;
+  phone?: string;
+  email?: string;
+  logo_url?: string;
+}
+
+export interface SchoolStats {
+  school: School;
+  stats: {
+    total_students: number;
+    total_teachers: number;
+    total_classes: number;
+    total_courses: number;
+  };
+}
+
+class SchoolsService {
+  async list(): Promise<School[]> {
+    const response = await api.get('/api/schools');
+    return response.data.data?.schools || [];
+  }
+
+  async getById(id: string): Promise<School> {
+    const response = await api.get(`/api/schools/${id}`);
+    return response.data.data;
+  }
+
+  async getStats(id: string): Promise<SchoolStats> {
+    const response = await api.get(`/api/schools/${id}/stats`);
+    return response.data.data;
+  }
+
+  async create(data: SchoolFormData): Promise<School> {
+    const response = await api.post('/api/schools', data);
+    return response.data.data;
+  }
+
+  async update(id: string, data: Partial<SchoolFormData>): Promise<School> {
+    const response = await api.put(`/api/schools/${id}`, data);
+    return response.data.data;
+  }
+
+  async delete(id: string): Promise<void> {
+    await api.delete(`/api/schools/${id}`);
+  }
+}
+
+export default new SchoolsService();

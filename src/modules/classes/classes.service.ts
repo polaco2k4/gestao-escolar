@@ -33,4 +33,93 @@ export class ClassesService {
     if (!classData) throw new AppError('Turma não encontrada', 404);
     return classData;
   }
+
+  async create(data: {
+    school_id: string;
+    academic_year_id: string;
+    course_id: string;
+    name: string;
+    year_level: number;
+    section?: string;
+    max_students?: number;
+    class_director_id?: string;
+  }) {
+    const course = await db('courses').where('id', data.course_id).first();
+    if (!course) throw new AppError('Curso não encontrado', 404);
+
+    const academicYear = await db('academic_years').where('id', data.academic_year_id).first();
+    if (!academicYear) throw new AppError('Ano académico não encontrado', 404);
+
+    const [classData] = await db('classes')
+      .insert({
+        ...data,
+        created_at: new Date(),
+        updated_at: new Date()
+      })
+      .returning('*');
+
+    return classData;
+  }
+
+  async update(id: string, data: {
+    name?: string;
+    year_level?: number;
+    section?: string;
+    max_students?: number;
+    class_director_id?: string;
+  }) {
+    const [classData] = await db('classes')
+      .where('id', id)
+      .update({
+        ...data,
+        updated_at: new Date()
+      })
+      .returning('*');
+
+    if (!classData) throw new AppError('Turma não encontrada', 404);
+    return classData;
+  }
+
+  async delete(id: string) {
+    const enrollments = await db('enrollments')
+      .where('class_id', id)
+      .where('status', 'active')
+      .count('* as count')
+      .first();
+
+    if (enrollments && parseInt(enrollments.count as string) > 0) {
+      throw new AppError('Não é possível eliminar turma com matrículas ativas', 400);
+    }
+
+    const deleted = await db('classes')
+      .where('id', id)
+      .delete();
+
+    if (!deleted) throw new AppError('Turma não encontrada', 404);
+    return { message: 'Turma eliminada com sucesso' };
+  }
+
+  async getStudents(id: string) {
+    const classData = await this.getById(id);
+
+    const students = await db('enrollments as e')
+      .join('students as s', 's.id', 'e.student_id')
+      .join('users as u', 'u.id', 's.user_id')
+      .select(
+        's.id',
+        's.student_number',
+        'u.first_name',
+        'u.last_name',
+        'u.email',
+        'e.status',
+        'e.enrollment_date'
+      )
+      .where('e.class_id', id)
+      .orderBy('u.first_name', 'asc');
+
+    return {
+      class: classData,
+      students
+    };
+  }
 }

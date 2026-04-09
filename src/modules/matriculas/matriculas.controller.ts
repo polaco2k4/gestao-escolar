@@ -29,7 +29,7 @@ export class MatriculasController {
 
   async create(req: AuthRequest, res: Response) {
     try {
-      const enrollment = await service.create({ ...req.body, school_id: req.user?.id });
+      const enrollment = await service.create(req.body);
       return sendSuccess(res, enrollment, 'Matrícula criada com sucesso', 201);
     } catch (error: any) {
       logger.error('Erro ao criar matrícula:', error);

@@ -72,10 +72,22 @@ export class MatriculasService {
 
     if (existing) throw new AppError('Estudante já matriculado neste ano lectivo', 409);
 
+    const classData = await db('classes').where('id', data.class_id).first();
+    if (!classData) throw new AppError('Turma não encontrada', 404);
+
+    const student = await db('students').where('id', data.student_id).first();
+    if (!student) throw new AppError('Estudante não encontrado', 404);
+
     const enrollmentNumber = data.enrollment_number || generateCode('MAT', 8);
 
     const [enrollment] = await db('enrollments')
-      .insert({ ...data, enrollment_number: enrollmentNumber })
+      .insert({ 
+        ...data, 
+        school_id: classData.school_id,
+        enrollment_number: enrollmentNumber,
+        enrollment_date: new Date(),
+        status: 'active'
+      })
       .returning('*');
 
     return enrollment;

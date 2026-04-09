@@ -1,11 +1,11 @@
 import { Response } from 'express';
 import { AuthRequest } from '../../middleware/auth';
-import { ClassesService } from './classes.service';
+import { SchoolsService } from './schools.service';
 import { sendSuccess, sendError } from '../../utils/helpers';
 
-const service = new ClassesService();
+const service = new SchoolsService();
 
-export class ClassesController {
+export class SchoolsController {
   async list(req: AuthRequest, res: Response) {
     try {
       const result = await service.list();
@@ -17,8 +17,8 @@ export class ClassesController {
 
   async getById(req: AuthRequest, res: Response) {
     try {
-      const classData = await service.getById(req.params.id);
-      return sendSuccess(res, classData);
+      const school = await service.getById(req.params.id);
+      return sendSuccess(res, school);
     } catch (error: any) {
       return sendError(res, error.message, error.statusCode || 500);
     }
@@ -26,11 +26,11 @@ export class ClassesController {
 
   async create(req: AuthRequest, res: Response) {
     try {
-      const classData = await service.create(req.body);
+      const school = await service.create(req.body);
       return res.status(201).json({
         success: true,
-        message: 'Turma criada com sucesso',
-        data: classData
+        message: 'Escola criada com sucesso',
+        data: school
       });
     } catch (error: any) {
       return sendError(res, error.message, error.statusCode || 500);
@@ -39,8 +39,8 @@ export class ClassesController {
 
   async update(req: AuthRequest, res: Response) {
     try {
-      const classData = await service.update(req.params.id, req.body);
-      return sendSuccess(res, classData);
+      const school = await service.update(req.params.id, req.body);
+      return sendSuccess(res, school);
     } catch (error: any) {
       return sendError(res, error.message, error.statusCode || 500);
     }
@@ -55,9 +55,9 @@ export class ClassesController {
     }
   }
 
-  async getStudents(req: AuthRequest, res: Response) {
+  async getStats(req: AuthRequest, res: Response) {
     try {
-      const result = await service.getStudents(req.params.id);
+      const result = await service.getStats(req.params.id);
       return sendSuccess(res, result);
     } catch (error: any) {
       return sendError(res, error.message, error.statusCode || 500);

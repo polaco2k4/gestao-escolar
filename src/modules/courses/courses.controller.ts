@@ -1,14 +1,17 @@
 import { Response } from 'express';
 import { AuthRequest } from '../../middleware/auth';
-import { ClassesService } from './classes.service';
+import { CoursesService } from './courses.service';
 import { sendSuccess, sendError } from '../../utils/helpers';
 
-const service = new ClassesService();
+const service = new CoursesService();
 
-export class ClassesController {
+export class CoursesController {
   async list(req: AuthRequest, res: Response) {
     try {
-      const result = await service.list();
+      const filters = {
+        school_id: req.query.school_id as string,
+      };
+      const result = await service.list(filters);
       return sendSuccess(res, result);
     } catch (error: any) {
       return sendError(res, error.message, error.statusCode || 500);
@@ -17,8 +20,8 @@ export class ClassesController {
 
   async getById(req: AuthRequest, res: Response) {
     try {
-      const classData = await service.getById(req.params.id);
-      return sendSuccess(res, classData);
+      const course = await service.getById(req.params.id);
+      return sendSuccess(res, course);
     } catch (error: any) {
       return sendError(res, error.message, error.statusCode || 500);
     }
@@ -26,11 +29,11 @@ export class ClassesController {
 
   async create(req: AuthRequest, res: Response) {
     try {
-      const classData = await service.create(req.body);
+      const course = await service.create(req.body);
       return res.status(201).json({
         success: true,
-        message: 'Turma criada com sucesso',
-        data: classData
+        message: 'Curso criado com sucesso',
+        data: course
       });
     } catch (error: any) {
       return sendError(res, error.message, error.statusCode || 500);
@@ -39,8 +42,8 @@ export class ClassesController {
 
   async update(req: AuthRequest, res: Response) {
     try {
-      const classData = await service.update(req.params.id, req.body);
-      return sendSuccess(res, classData);
+      const course = await service.update(req.params.id, req.body);
+      return sendSuccess(res, course);
     } catch (error: any) {
       return sendError(res, error.message, error.statusCode || 500);
     }
@@ -49,15 +52,6 @@ export class ClassesController {
   async delete(req: AuthRequest, res: Response) {
     try {
       const result = await service.delete(req.params.id);
-      return sendSuccess(res, result);
-    } catch (error: any) {
-      return sendError(res, error.message, error.statusCode || 500);
-    }
-  }
-
-  async getStudents(req: AuthRequest, res: Response) {
-    try {
-      const result = await service.getStudents(req.params.id);
       return sendSuccess(res, result);
     } catch (error: any) {
       return sendError(res, error.message, error.statusCode || 500);

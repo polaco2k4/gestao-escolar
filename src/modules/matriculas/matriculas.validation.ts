@@ -2,11 +2,11 @@ import { z } from 'zod';
 
 export const createEnrollmentSchema = z.object({
   body: z.object({
-    student_id: z.string().uuid(),
-    academic_year_id: z.string().uuid(),
-    class_id: z.string().uuid(),
-    enrollment_number: z.string().min(1).optional(),
-    notes: z.string().optional(),
+    student_id: z.string().uuid('ID do estudante inválido'),
+    academic_year_id: z.string().uuid('ID do ano académico inválido'),
+    class_id: z.string().uuid('ID da turma inválido'),
+    enrollment_number: z.string().optional().or(z.literal('')).transform(val => val || undefined),
+    notes: z.string().optional().or(z.literal('')).transform(val => val || undefined),
   }),
 });
 

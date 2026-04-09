@@ -13,7 +13,9 @@ import {
   BarChart,
   LogOut,
   Menu,
-  X
+  X,
+  School,
+  UsersRound
 } from 'lucide-react';
 import { useState } from 'react';
 
@@ -24,6 +26,8 @@ export default function Layout() {
 
   const navigation = [
     { name: 'Dashboard', href: '/dashboard', icon: LayoutDashboard },
+    { name: 'Escolas', href: '/escolas', icon: School },
+    { name: 'Turmas', href: '/turmas', icon: UsersRound },
     { name: 'Matrículas', href: '/matriculas', icon: GraduationCap },
     { name: 'Estudantes', href: '/estudantes', icon: Users },
     { name: 'Avaliações', href: '/avaliacoes', icon: FileText },

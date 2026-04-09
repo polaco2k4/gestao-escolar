@@ -9,6 +9,8 @@ import { globalLimiter } from './middleware/rateLimiter';
 import { errorHandler, notFoundHandler } from './middleware/errorHandler';
 
 import authRoutes from './modules/auth/auth.routes';
+import schoolsRoutes from './modules/schools/schools.routes';
+import coursesRoutes from './modules/courses/courses.routes';
 import matriculasRoutes from './modules/matriculas/matriculas.routes';
 import studentsRoutes from './modules/students/students.routes';
 import classesRoutes from './modules/classes/classes.routes';
@@ -41,6 +43,8 @@ app.get('/health', (_req, res) => {
 });
 
 app.use('/api/auth', authRoutes);
+app.use('/api/schools', schoolsRoutes);
+app.use('/api/courses', coursesRoutes);
 app.use('/api/matriculas', matriculasRoutes);
 app.use('/api/students', studentsRoutes);
 app.use('/api/classes', classesRoutes);

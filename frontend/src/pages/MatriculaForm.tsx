@@ -38,12 +38,12 @@ export default function MatriculaForm() {
 
   const loadData = async () => {
     try {
-      const [studentsData, yearsData, classesData] = await Promise.all([
-        studentsService.list(),
+      const [studentsResponse, yearsData, classesData] = await Promise.all([
+        studentsService.list({ limit: 1000 }),
         academicYearsService.list(),
         classesService.list(),
       ]);
-      setStudents(studentsData);
+      setStudents(studentsResponse.students || []);
       setAcademicYears(yearsData);
       setClasses(classesData);
     } catch (error) {
@@ -77,6 +77,8 @@ export default function MatriculaForm() {
       return;
     }
 
+    console.log('Dados sendo enviados:', formData);
+
     try {
       setLoading(true);
       if (isEdit && id) {
@@ -89,7 +91,26 @@ export default function MatriculaForm() {
       navigate('/matriculas');
     } catch (error: any) {
       console.error('Erro ao salvar matrícula:', error);
-      alert(error.response?.data?.message || 'Erro ao salvar matrícula');
+      console.error('Response data:', error.response?.data);
+      console.error('Validation errors:', error.response?.data?.errors);
+      
+      let errorMessage = 'Erro ao salvar matrícula';
+      
+      if (error.response?.status === 409) {
+        errorMessage = 'Estudante já matriculado neste ano lectivo';
+      } else if (error.response?.status === 422) {
+        const errors = error.response?.data?.errors;
+        if (errors && errors.length > 0) {
+          const errorDetails = errors.map((e: any) => `${e.field}: ${e.message}`).join('\n');
+          errorMessage = `Dados inválidos:\n${errorDetails}`;
+        } else {
+          errorMessage = 'Dados inválidos. Verifique se todos os campos estão preenchidos corretamente';
+        }
+      } else if (error.response?.data?.message) {
+        errorMessage = error.response.data.message;
+      }
+      
+      alert(errorMessage);
     } finally {
       setLoading(false);
     }

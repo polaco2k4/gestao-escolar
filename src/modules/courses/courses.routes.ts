@@ -1,16 +1,15 @@
 import { Router } from 'express';
-import { ClassesController } from './classes.controller';
+import { CoursesController } from './courses.controller';
 import { authenticate } from '../../middleware/auth';
 import { authorize } from '../../middleware/roles';
 
 const router = Router();
-const controller = new ClassesController();
+const controller = new CoursesController();
 
 router.use(authenticate);
 
 router.get('/', controller.list);
 router.get('/:id', controller.getById);
-router.get('/:id/students', controller.getStudents);
 router.post('/', authorize('admin'), controller.create);
 router.put('/:id', authorize('admin'), controller.update);
 router.delete('/:id', authorize('admin'), controller.delete);
