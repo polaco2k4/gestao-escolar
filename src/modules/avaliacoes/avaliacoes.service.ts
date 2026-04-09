@@ -1,0 +1,126 @@
+import db from '../../config/database';
+import { AppError } from '../../middleware/errorHandler';
+import { paginate, buildPaginationMeta } from '../../utils/helpers';
+
+export class AvaliacoesService {
+  async list(page = 1, limit = 20, filters: any = {}) {
+    const { offset } = paginate(page, limit);
+    const query = db('assessments as a')
+      .join('subjects as sub', 'sub.id', 'a.subject_id')
+      .join('classes as c', 'c.id', 'a.class_id')
+      .join('teachers as t', 't.id', 'a.teacher_id')
+      .join('users as u', 'u.id', 't.user_id')
+      .join('assessment_types as at', 'at.id', 'a.assessment_type_id')
+      .select('a.*', 'sub.name as subject_name', 'c.name as class_name', 'u.first_name as teacher_first_name', 'u.last_name as teacher_last_name', 'at.name as type_name');
+
+    if (filters.class_id) query.where('a.class_id', filters.class_id);
+    if (filters.subject_id) query.where('a.subject_id', filters.subject_id);
+    if (filters.trimester) query.where('a.trimester', filters.trimester);
+    if (filters.teacher_id) query.where('a.teacher_id', filters.teacher_id);
+
+    const countQuery = db('assessments as a').count('a.id as count');
+    if (filters.class_id) countQuery.where('a.class_id', filters.class_id);
+    const [{ count }] = await countQuery;
+
+    const assessments = await query.orderBy('a.date', 'desc').limit(limit).offset(offset);
+    return { assessments, meta: buildPaginationMeta(Number(count), page, limit) };
+  }
+
+  async getById(id: string) {
+    const assessment = await db('assessments as a')
+      .join('subjects as sub', 'sub.id', 'a.subject_id')
+      .join('classes as c', 'c.id', 'a.class_id')
+      .join('assessment_types as at', 'at.id', 'a.assessment_type_id')
+      .select('a.*', 'sub.name as subject_name', 'c.name as class_name', 'at.name as type_name', 'at.max_score')
+      .where('a.id', id)
+      .first();
+
+    if (!assessment) throw new AppError('Avaliação não encontrada', 404);
+    return assessment;
+  }
+
+  async create(data: any) {
+    const [assessment] = await db('assessments').insert(data).returning('*');
+    return assessment;
+  }
+
+  async update(id: string, data: any) {
+    const [updated] = await db('assessments').where({ id }).update({ ...data, updated_at: new Date() }).returning('*');
+    if (!updated) throw new AppError('Avaliação não encontrada', 404);
+    return updated;
+  }
+
+  async delete(id: string) {
+    const deleted = await db('assessments').where({ id }).delete();
+    if (!deleted) throw new AppError('Avaliação não encontrada', 404);
+  }
+
+  async listGrades(assessmentId: string) {
+    const grades = await db('grades as g')
+      .join('students as s', 's.id', 'g.student_id')
+      .join('users as u', 'u.id', 's.user_id')
+      .select('g.*', 'u.first_name', 'u.last_name', 's.student_number')
+      .where('g.assessment_id', assessmentId)
+      .orderBy('u.last_name');
+
+    return grades;
+  }
+
+  async saveGrades(assessmentId: string, grades: Array<{ student_id: string; score: number; remarks?: string }>) {
+    return db.transaction(async (trx) => {
+      const results = [];
+      for (const grade of grades) {
+        const existing = await trx('grades').where({ assessment_id: assessmentId, student_id: grade.student_id }).first();
+
+        if (existing) {
+          const [updated] = await trx('grades')
+            .where({ id: existing.id })
+            .update({ score: grade.score, remarks: grade.remarks, updated_at: new Date() })
+            .returning('*');
+          results.push(updated);
+        } else {
+          const [created] = await trx('grades')
+            .insert({ assessment_id: assessmentId, student_id: grade.student_id, score: grade.score, remarks: grade.remarks })
+            .returning('*');
+          results.push(created);
+        }
+      }
+      return results;
+    });
+  }
+
+  async listGradeSheets(filters: any = {}) {
+    const query = db('grade_sheets as gs')
+      .join('classes as c', 'c.id', 'gs.class_id')
+      .join('subjects as sub', 'sub.id', 'gs.subject_id')
+      .select('gs.*', 'c.name as class_name', 'sub.name as subject_name');
+
+    if (filters.class_id) query.where('gs.class_id', filters.class_id);
+    if (filters.status) query.where('gs.status', filters.status);
+
+    return query.orderBy('gs.created_at', 'desc');
+  }
+
+  async createGradeSheet(data: any) {
+    const [sheet] = await db('grade_sheets').insert(data).returning('*');
+    return sheet;
+  }
+
+  async submitGradeSheet(id: string, teacherId: string) {
+    const [sheet] = await db('grade_sheets')
+      .where({ id })
+      .update({ status: 'submitted', submitted_by: teacherId, submitted_at: new Date(), updated_at: new Date() })
+      .returning('*');
+    if (!sheet) throw new AppError('Pauta não encontrada', 404);
+    return sheet;
+  }
+
+  async approveGradeSheet(id: string, approvedBy: string) {
+    const [sheet] = await db('grade_sheets')
+      .where({ id })
+      .update({ status: 'approved', approved_by: approvedBy, approved_at: new Date(), updated_at: new Date() })
+      .returning('*');
+    if (!sheet) throw new AppError('Pauta não encontrada', 404);
+    return sheet;
+  }
+}
