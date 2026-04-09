@@ -1,0 +1,107 @@
+### Variáveis
+@baseUrl = http://localhost:3000/api
+@token = seu_token_jwt_aqui
+
+### 1. Listar todas as avaliações
+GET {{baseUrl}}/avaliacoes
+Authorization: Bearer {{token}}
+
+### 2. Listar avaliações com filtros
+GET {{baseUrl}}/avaliacoes?page=1&limit=10&trimester=1
+Authorization: Bearer {{token}}
+
+### 3. Obter avaliação por ID
+GET {{baseUrl}}/avaliacoes/uuid-da-avaliacao
+Authorization: Bearer {{token}}
+
+### 4. Criar nova avaliação
+POST {{baseUrl}}/avaliacoes
+Authorization: Bearer {{token}}
+Content-Type: application/json
+
+{
+  "school_id": "uuid-da-escola",
+  "academic_year_id": "uuid-do-ano-academico",
+  "class_id": "uuid-da-turma",
+  "subject_id": "uuid-da-disciplina",
+  "teacher_id": "uuid-do-professor",
+  "assessment_type_id": "uuid-do-tipo-avaliacao",
+  "name": "Teste de Matemática - 1º Trimestre",
+  "description": "Teste sobre álgebra e geometria",
+  "date": "2024-04-15",
+  "trimester": 1
+}
+
+### 5. Actualizar avaliação
+PUT {{baseUrl}}/avaliacoes/uuid-da-avaliacao
+Authorization: Bearer {{token}}
+Content-Type: application/json
+
+{
+  "name": "Teste de Matemática - Actualizado",
+  "description": "Nova descrição do teste",
+  "date": "2024-04-20",
+  "trimester": 1
+}
+
+### 6. Eliminar avaliação
+DELETE {{baseUrl}}/avaliacoes/uuid-da-avaliacao
+Authorization: Bearer {{token}}
+
+### 7. Listar notas de uma avaliação
+GET {{baseUrl}}/avaliacoes/uuid-da-avaliacao/grades
+Authorization: Bearer {{token}}
+
+### 8. Guardar/Actualizar notas
+POST {{baseUrl}}/avaliacoes/uuid-da-avaliacao/grades
+Authorization: Bearer {{token}}
+Content-Type: application/json
+
+{
+  "grades": [
+    {
+      "student_id": "uuid-do-estudante-1",
+      "score": 15.5,
+      "remarks": "Bom desempenho"
+    },
+    {
+      "student_id": "uuid-do-estudante-2",
+      "score": 18.0,
+      "remarks": "Excelente trabalho"
+    },
+    {
+      "student_id": "uuid-do-estudante-3",
+      "score": 12.0,
+      "remarks": "Precisa melhorar"
+    }
+  ]
+}
+
+### 9. Listar pautas
+GET {{baseUrl}}/avaliacoes/sheets/list
+Authorization: Bearer {{token}}
+
+### 10. Listar pautas com filtros
+GET {{baseUrl}}/avaliacoes/sheets/list?class_id=uuid-da-turma&status=submitted
+Authorization: Bearer {{token}}
+
+### 11. Criar pauta
+POST {{baseUrl}}/avaliacoes/sheets
+Authorization: Bearer {{token}}
+Content-Type: application/json
+
+{
+  "school_id": "uuid-da-escola",
+  "academic_year_id": "uuid-do-ano-academico",
+  "class_id": "uuid-da-turma",
+  "subject_id": "uuid-da-disciplina",
+  "trimester": 1
+}
+
+### 12. Submeter pauta (Professor)
+PUT {{baseUrl}}/avaliacoes/sheets/uuid-da-pauta/submit
+Authorization: Bearer {{token}}
+
+### 13. Aprovar pauta (Admin)
+PUT {{baseUrl}}/avaliacoes/sheets/uuid-da-pauta/approve
+Authorization: Bearer {{token}}

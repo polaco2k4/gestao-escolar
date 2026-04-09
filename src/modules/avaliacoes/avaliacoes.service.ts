@@ -1,9 +1,17 @@
 import db from '../../config/database';
 import { AppError } from '../../middleware/errorHandler';
 import { paginate, buildPaginationMeta } from '../../utils/helpers';
+import {
+  CreateAssessmentDTO,
+  UpdateAssessmentDTO,
+  AssessmentFilters,
+  SaveGradeDTO,
+  CreateGradeSheetDTO,
+  GradeSheetFilters
+} from './avaliacoes.types';
 
 export class AvaliacoesService {
-  async list(page = 1, limit = 20, filters: any = {}) {
+  async list(page = 1, limit = 20, filters: AssessmentFilters = {}) {
     const { offset } = paginate(page, limit);
     const query = db('assessments as a')
       .join('subjects as sub', 'sub.id', 'a.subject_id')
@@ -20,6 +28,9 @@ export class AvaliacoesService {
 
     const countQuery = db('assessments as a').count('a.id as count');
     if (filters.class_id) countQuery.where('a.class_id', filters.class_id);
+    if (filters.subject_id) countQuery.where('a.subject_id', filters.subject_id);
+    if (filters.trimester) countQuery.where('a.trimester', filters.trimester);
+    if (filters.teacher_id) countQuery.where('a.teacher_id', filters.teacher_id);
     const [{ count }] = await countQuery;
 
     const assessments = await query.orderBy('a.date', 'desc').limit(limit).offset(offset);
@@ -39,12 +50,20 @@ export class AvaliacoesService {
     return assessment;
   }
 
-  async create(data: any) {
+  async create(data: CreateAssessmentDTO) {
+    if (!data.school_id) throw new AppError('ID da escola é obrigatório', 400);
+    if (!data.academic_year_id) throw new AppError('ID do ano académico é obrigatório', 400);
+    if (!data.class_id) throw new AppError('ID da turma é obrigatório', 400);
+    if (!data.subject_id) throw new AppError('ID da disciplina é obrigatório', 400);
+    if (!data.teacher_id) throw new AppError('ID do professor é obrigatório', 400);
+    if (!data.assessment_type_id) throw new AppError('ID do tipo de avaliação é obrigatório', 400);
+    if (!data.name) throw new AppError('Nome da avaliação é obrigatório', 400);
+
     const [assessment] = await db('assessments').insert(data).returning('*');
     return assessment;
   }
 
-  async update(id: string, data: any) {
+  async update(id: string, data: UpdateAssessmentDTO) {
     const [updated] = await db('assessments').where({ id }).update({ ...data, updated_at: new Date() }).returning('*');
     if (!updated) throw new AppError('Avaliação não encontrada', 404);
     return updated;
@@ -66,10 +85,24 @@ export class AvaliacoesService {
     return grades;
   }
 
-  async saveGrades(assessmentId: string, grades: Array<{ student_id: string; score: number; remarks?: string }>) {
+  async saveGrades(assessmentId: string, grades: SaveGradeDTO[]) {
+    const assessment = await db('assessments as a')
+      .join('assessment_types as at', 'at.id', 'a.assessment_type_id')
+      .select('a.*', 'at.max_score')
+      .where('a.id', assessmentId)
+      .first();
+
+    if (!assessment) throw new AppError('Avaliação não encontrada', 404);
+    if (!grades || grades.length === 0) throw new AppError('Nenhuma nota fornecida', 400);
+
     return db.transaction(async (trx) => {
       const results = [];
       for (const grade of grades) {
+        if (!grade.student_id) throw new AppError('ID do estudante é obrigatório', 400);
+        if (grade.score < 0 || grade.score > assessment.max_score) {
+          throw new AppError(`Nota deve estar entre 0 e ${assessment.max_score}`, 400);
+        }
+
         const existing = await trx('grades').where({ assessment_id: assessmentId, student_id: grade.student_id }).first();
 
         if (existing) {
@@ -89,7 +122,7 @@ export class AvaliacoesService {
     });
   }
 
-  async listGradeSheets(filters: any = {}) {
+  async listGradeSheets(filters: GradeSheetFilters = {}) {
     const query = db('grade_sheets as gs')
       .join('classes as c', 'c.id', 'gs.class_id')
       .join('subjects as sub', 'sub.id', 'gs.subject_id')
@@ -101,7 +134,13 @@ export class AvaliacoesService {
     return query.orderBy('gs.created_at', 'desc');
   }
 
-  async createGradeSheet(data: any) {
+  async createGradeSheet(data: CreateGradeSheetDTO) {
+    if (!data.school_id) throw new AppError('ID da escola é obrigatório', 400);
+    if (!data.academic_year_id) throw new AppError('ID do ano académico é obrigatório', 400);
+    if (!data.class_id) throw new AppError('ID da turma é obrigatório', 400);
+    if (!data.subject_id) throw new AppError('ID da disciplina é obrigatório', 400);
+    if (!data.trimester) throw new AppError('Trimestre é obrigatório', 400);
+
     const [sheet] = await db('grade_sheets').insert(data).returning('*');
     return sheet;
   }

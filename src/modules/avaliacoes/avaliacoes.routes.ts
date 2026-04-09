@@ -8,18 +8,18 @@ const controller = new AvaliacoesController();
 
 router.use(authenticate);
 
-router.get('/', controller.list);
-router.get('/:id', controller.getById);
-router.post('/', authorize('admin', 'professor'), controller.create);
-router.put('/:id', authorize('admin', 'professor'), controller.update);
-router.delete('/:id', authorize('admin', 'professor'), controller.delete);
+router.get('/sheets/list', authorize('admin', 'professor'), (req, res) => controller.listGradeSheets(req, res));
+router.post('/sheets', authorize('admin', 'professor'), (req, res) => controller.createGradeSheet(req, res));
+router.put('/sheets/:id/submit', authorize('professor'), (req, res) => controller.submitGradeSheet(req, res));
+router.put('/sheets/:id/approve', authorize('admin'), (req, res) => controller.approveGradeSheet(req, res));
 
-router.get('/:assessmentId/grades', controller.listGrades);
-router.post('/:assessmentId/grades', authorize('admin', 'professor'), controller.saveGrades);
+router.get('/', (req, res) => controller.list(req, res));
+router.get('/:id', (req, res) => controller.getById(req, res));
+router.post('/', authorize('admin', 'professor'), (req, res) => controller.create(req, res));
+router.put('/:id', authorize('admin', 'professor'), (req, res) => controller.update(req, res));
+router.delete('/:id', authorize('admin', 'professor'), (req, res) => controller.delete(req, res));
 
-router.get('/sheets/list', authorize('admin', 'professor'), controller.listGradeSheets);
-router.post('/sheets', authorize('admin', 'professor'), controller.createGradeSheet);
-router.put('/sheets/:id/submit', authorize('professor'), controller.submitGradeSheet);
-router.put('/sheets/:id/approve', authorize('admin'), controller.approveGradeSheet);
+router.get('/:assessmentId/grades', (req, res) => controller.listGrades(req, res));
+router.post('/:assessmentId/grades', authorize('admin', 'professor'), (req, res) => controller.saveGrades(req, res));
 
 export default router;

@@ -1,0 +1,17 @@
+import { Router } from 'express';
+import { AssessmentTypesController } from './assessmentTypes.controller';
+import { authenticate } from '../../middleware/auth';
+import { authorize } from '../../middleware/roles';
+
+const router = Router();
+const controller = new AssessmentTypesController();
+
+router.use(authenticate);
+
+router.get('/', (req, res) => controller.list(req, res));
+router.post('/', authorize('admin'), (req, res) => controller.create(req, res));
+router.get('/:id', (req, res) => controller.getById(req, res));
+router.put('/:id', authorize('admin'), (req, res) => controller.update(req, res));
+router.delete('/:id', authorize('admin'), (req, res) => controller.delete(req, res));
+
+export default router;

@@ -137,8 +137,22 @@ async function seedData() {
     }
     console.log(`✅ ${studentIds.length} matrículas criadas`);
 
-    // 10. Criar tipos de propinas
-    console.log('\n🔟 A criar tipos de propinas...');
+    // 10. Criar tipos de avaliação
+    console.log('\n🔟 A criar tipos de avaliação...');
+    const assessmentTypes = [
+      { school_id: schoolId, name: 'Teste', weight: 0.3, max_score: 20 },
+      { school_id: schoolId, name: 'Exame', weight: 0.4, max_score: 20 },
+      { school_id: schoolId, name: 'Trabalho', weight: 0.2, max_score: 20 },
+      { school_id: schoolId, name: 'Participação', weight: 0.1, max_score: 20 }
+    ];
+
+    for (const type of assessmentTypes) {
+      await axios.post(`${API_URL}/api/assessment-types`, type, { headers });
+      console.log('  ✅', type.name, '- Peso:', type.weight, '- Nota Máxima:', type.max_score);
+    }
+
+    // 11. Criar tipos de propinas
+    console.log('\n1️⃣1️⃣ A criar tipos de propinas...');
     const feeTypes = [
       { school_id: schoolId, name: 'Matrícula', amount: 15000, frequency: 'once' },
       { school_id: schoolId, name: 'Mensalidade', amount: 25000, frequency: 'monthly' },
@@ -160,6 +174,7 @@ async function seedData() {
     console.log('  - 3 Professores');
     console.log('  - 5 Estudantes');
     console.log('  - 5 Matrículas');
+    console.log('  - 4 Tipos de Avaliação');
     console.log('  - 3 Tipos de Propinas');
 
     console.log('\n🔐 Credenciais de Teste:');

@@ -10,6 +10,7 @@
     "migrate": "knex migrate:latest --knexfile src/config/knexfile.ts",
     "migrate:rollback": "knex migrate:rollback --knexfile src/config/knexfile.ts",
     "seed": "knex seed:run --knexfile src/config/knexfile.ts",
+    "seed:data": "node scripts/seed-data.js",
     "lint": "eslint src/**/*.ts",
     "test": "jest --passWithNoTests"
   },

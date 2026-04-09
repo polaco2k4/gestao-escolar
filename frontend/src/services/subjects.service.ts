@@ -1,0 +1,42 @@
+import api from '../config/api';
+
+export interface Subject {
+  id: string;
+  school_id: string;
+  course_id?: string;
+  name: string;
+  code: string;
+  description?: string;
+  credits: number;
+  year_level: number;
+  created_at: string;
+  updated_at: string;
+}
+
+class SubjectsService {
+  async list(): Promise<Subject[]> {
+    const response = await api.get('/api/subjects');
+    return response.data.data;
+  }
+
+  async getById(id: string): Promise<Subject> {
+    const response = await api.get(`/api/subjects/${id}`);
+    return response.data.data;
+  }
+
+  async create(data: Omit<Subject, 'id' | 'school_id' | 'course_id' | 'created_at' | 'updated_at'>): Promise<Subject> {
+    const response = await api.post('/api/subjects', data);
+    return response.data.data;
+  }
+
+  async update(id: string, data: Partial<Subject>): Promise<Subject> {
+    const response = await api.put(`/api/subjects/${id}`, data);
+    return response.data.data;
+  }
+
+  async delete(id: string): Promise<void> {
+    await api.delete(`/api/subjects/${id}`);
+  }
+}
+
+export default new SubjectsService();

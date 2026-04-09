@@ -1,13 +1,13 @@
 import { Outlet, Link, useLocation } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
-import { 
-  GraduationCap, 
-  LayoutDashboard, 
-  Users, 
-  BookOpen, 
-  Calendar, 
-  DollarSign, 
-  MessageSquare, 
+import {
+  GraduationCap,
+  LayoutDashboard,
+  Users,
+  BookOpen,
+  Calendar,
+  DollarSign,
+  MessageSquare,
   ClipboardList,
   FileText,
   BarChart,
@@ -15,7 +15,10 @@ import {
   Menu,
   X,
   School,
-  UsersRound
+  UsersRound,
+  Book,
+  UserCheck,
+  ClipboardCheck
 } from 'lucide-react';
 import { useState } from 'react';
 
@@ -30,6 +33,9 @@ export default function Layout() {
     { name: 'Turmas', href: '/turmas', icon: UsersRound },
     { name: 'Matrículas', href: '/matriculas', icon: GraduationCap },
     { name: 'Estudantes', href: '/estudantes', icon: Users },
+    { name: 'Disciplinas', href: '/subjects', icon: Book },
+    { name: 'Professores', href: '/teachers', icon: UserCheck },
+    { name: 'Tipos de Avaliação', href: '/assessment-types', icon: ClipboardCheck },
     { name: 'Avaliações', href: '/avaliacoes', icon: FileText },
     { name: 'Horários', href: '/horarios', icon: Calendar },
     { name: 'Financeiro', href: '/financeiro', icon: DollarSign },
