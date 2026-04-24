@@ -22,7 +22,7 @@ export class FinanceiroService {
   }
 
   // --- Student Fees ---
-  async listStudentFees(page = 1, limit = 20, filters: any = {}) {
+  async listStudentFees(page = 1, limit = 20, filters: any = {}, guardianId?: string) {
     const { offset } = paginate(page, limit);
     const query = db('student_fees as sf')
       .join('students as s', 's.id', 'sf.student_id')
@@ -32,10 +32,13 @@ export class FinanceiroService {
 
     if (filters.status) query.where('sf.status', filters.status);
     if (filters.academic_year_id) query.where('sf.academic_year_id', filters.academic_year_id);
+    if (guardianId) query.where('s.guardian_id', guardianId);
 
-    const countQuery = db('student_fees as sf');
+    const countQuery = db('student_fees as sf')
+      .join('students as s', 's.id', 'sf.student_id');
     if (filters.status) countQuery.where('sf.status', filters.status);
     if (filters.academic_year_id) countQuery.where('sf.academic_year_id', filters.academic_year_id);
+    if (guardianId) countQuery.where('s.guardian_id', guardianId);
     const [{ count }] = await countQuery.count('sf.id as count');
     
     const fees = await query.orderBy('sf.due_date', 'desc').limit(limit).offset(offset);
@@ -80,7 +83,7 @@ export class FinanceiroService {
   }
 
   // --- Payments ---
-  async listPayments(page = 1, limit = 20, filters: any = {}) {
+  async listPayments(page = 1, limit = 20, filters: any = {}, guardianId?: string) {
     const { offset } = paginate(page, limit);
     const query = db('payments as p')
       .join('student_fees as sf', 'sf.id', 'p.student_fee_id')
@@ -93,11 +96,15 @@ export class FinanceiroService {
     if (filters.school_id) query.where('p.school_id', filters.school_id);
     if (filters.start_date) query.where('p.payment_date', '>=', filters.start_date);
     if (filters.end_date) query.where('p.payment_date', '<=', filters.end_date);
+    if (guardianId) query.where('s.guardian_id', guardianId);
 
-    const countQuery = db('payments as p');
+    const countQuery = db('payments as p')
+      .join('student_fees as sf', 'sf.id', 'p.student_fee_id')
+      .join('students as s', 's.id', 'sf.student_id');
     if (filters.school_id) countQuery.where('p.school_id', filters.school_id);
     if (filters.start_date) countQuery.where('p.payment_date', '>=', filters.start_date);
     if (filters.end_date) countQuery.where('p.payment_date', '<=', filters.end_date);
+    if (guardianId) countQuery.where('s.guardian_id', guardianId);
     const [{ count }] = await countQuery.count('p.id as count');
     
     const payments = await query.orderBy('p.payment_date', 'desc').limit(limit).offset(offset);

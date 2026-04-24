@@ -2,8 +2,10 @@ import { useState, useEffect } from 'react';
 import { DollarSign, AlertCircle, CheckCircle, Clock, Plus, Receipt, X } from 'lucide-react';
 import financeiroService from '../services/financeiro.service';
 import type { FinancialSummary, Payment, StudentFee } from '../services/financeiro.service';
+import { useAuth } from '../contexts/AuthContext';
 
 export default function Financeiro() {
+  const { user } = useAuth();
   const [summary, setSummary] = useState<FinancialSummary | null>(null);
   const [recentPayments, setRecentPayments] = useState<Payment[]>([]);
   const [pendingFees, setPendingFees] = useState<StudentFee[]>([]);
@@ -20,13 +22,17 @@ export default function Financeiro() {
   const loadData = async () => {
     try {
       setLoading(true);
-      const [summaryData, paymentsData, feesData] = await Promise.all([
-        financeiroService.getFinancialSummary({}),
+      const [paymentsData, feesData] = await Promise.all([
         financeiroService.listPayments({}),
         financeiroService.listStudentFees({ status: 'pending' }),
       ]);
       
-      setSummary(summaryData);
+      // Only load summary for admin
+      if (user?.role === 'admin') {
+        const summaryData = await financeiroService.getFinancialSummary({});
+        setSummary(summaryData);
+      }
+      
       setRecentPayments(Array.isArray(paymentsData) ? paymentsData.slice(0, 10) : []);
       setPendingFees(Array.isArray(feesData) ? feesData.slice(0, 10) : []);
     } catch (error) {
@@ -90,16 +96,18 @@ export default function Financeiro() {
             Visão geral das finanças da escola
           </p>
         </div>
-        <div className="flex space-x-3">
-          <button onClick={() => setShowPaymentModal(true)} className="inline-flex items-center px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-green-600 hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500">
-            <Receipt className="h-5 w-5 mr-2" />
-            Registar Pagamento
-          </button>
-          <button onClick={() => setShowFeeModal(true)} className="inline-flex items-center px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500">
-            <Plus className="h-5 w-5 mr-2" />
-            Nova Propina
-          </button>
-        </div>
+        {user?.role === 'admin' && (
+          <div className="flex space-x-3">
+            <button onClick={() => setShowPaymentModal(true)} className="inline-flex items-center px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-green-600 hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500">
+              <Receipt className="h-5 w-5 mr-2" />
+              Registar Pagamento
+            </button>
+            <button onClick={() => setShowFeeModal(true)} className="inline-flex items-center px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500">
+              <Plus className="h-5 w-5 mr-2" />
+              Nova Propina
+            </button>
+          </div>
+        )}
       </div>
 
       {/* Summary Cards */}

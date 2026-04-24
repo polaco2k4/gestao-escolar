@@ -3,6 +3,7 @@ import { AuthRequest } from '../../middleware/auth';
 import { FinanceiroService } from './financeiro.service';
 import { sendSuccess, sendError } from '../../utils/helpers';
 import logger from '../../utils/logger';
+import db from '../../config/database';
 
 const service = new FinanceiroService();
 
@@ -37,7 +38,17 @@ export class FinanceiroController {
   async listStudentFees(req: AuthRequest, res: Response) {
     try {
       const { page = 1, limit = 20, ...filters } = req.query;
-      const result = await service.listStudentFees(Number(page), Number(limit), filters);
+      
+      // If user is guardian, filter by their students
+      let guardianId = filters.guardian_id as string;
+      if (req.user?.role === 'encarregado' && !guardianId) {
+        const guardian = await db('guardians').where('user_id', req.user.id).first();
+        if (guardian) {
+          guardianId = guardian.id;
+        }
+      }
+      
+      const result = await service.listStudentFees(Number(page), Number(limit), filters, guardianId);
       return sendSuccess(res, result);
     } catch (error: any) {
       logger.error('Erro ao listar propinas:', error);
@@ -76,7 +87,17 @@ export class FinanceiroController {
   async listPayments(req: AuthRequest, res: Response) {
     try {
       const { page = 1, limit = 20, ...filters } = req.query;
-      const result = await service.listPayments(Number(page), Number(limit), filters);
+      
+      // If user is guardian, filter by their students
+      let guardianId = filters.guardian_id as string;
+      if (req.user?.role === 'encarregado' && !guardianId) {
+        const guardian = await db('guardians').where('user_id', req.user.id).first();
+        if (guardian) {
+          guardianId = guardian.id;
+        }
+      }
+      
+      const result = await service.listPayments(Number(page), Number(limit), filters, guardianId);
       return sendSuccess(res, result);
     } catch (error: any) {
       logger.error('Erro ao listar pagamentos:', error);

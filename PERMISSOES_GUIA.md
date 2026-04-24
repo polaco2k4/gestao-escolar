@@ -264,7 +264,6 @@ O menu lateral é **filtrado automaticamente** baseado na role do usuário:
 - ✅ Relatórios
 
 #### **Professor** vê:
-- ✅ Dashboard
 - ✅ Turmas
 - ✅ Estudantes
 - ✅ Disciplinas
@@ -276,7 +275,6 @@ O menu lateral é **filtrado automaticamente** baseado na role do usuário:
 - ✅ Relatórios
 
 #### **Estudante** vê:
-- ✅ Dashboard
 - ✅ Disciplinas
 - ✅ Avaliações
 - ✅ Horários
@@ -285,15 +283,20 @@ O menu lateral é **filtrado automaticamente** baseado na role do usuário:
 - ✅ Documentos
 
 #### **Encarregado** vê:
-- ✅ Dashboard
+- ✅ Meus Educandos
+- ✅ Disciplinas
+- ✅ Avaliações
+- ✅ Horários
+- ✅ Financeiro
 - ✅ Comunicação
+- ✅ Assiduidade
 - ✅ Documentos
 
 **Arquivo:** `frontend/src/components/Layout.tsx`
 
 ```typescript
 const allNavigation = [
-  { name: 'Dashboard', href: '/dashboard', icon: LayoutDashboard, roles: ['admin', 'professor', 'estudante', 'encarregado'] },
+  { name: 'Dashboard', href: '/dashboard', icon: LayoutDashboard, roles: ['admin'] },
   { name: 'Escolas', href: '/escolas', icon: School, roles: ['admin'] },
   // ... outros itens
 ];

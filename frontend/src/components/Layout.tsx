@@ -1,5 +1,6 @@
-import { Outlet, Link, useLocation } from 'react-router-dom';
+import { Outlet, Link, useLocation, useNavigate } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
+import { useEffect } from 'react';
 import {
   GraduationCap,
   LayoutDashboard,
@@ -26,10 +27,24 @@ import { useState } from 'react';
 export default function Layout() {
   const { user, logout } = useAuth();
   const location = useLocation();
+  const navigate = useNavigate();
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
 
+  // Redirect non-admin users away from dashboard
+  useEffect(() => {
+    if (location.pathname === '/dashboard' && user?.role !== 'admin') {
+      if (user?.role === 'estudante') {
+        navigate('/subjects');
+      } else if (user?.role === 'professor') {
+        navigate('/turmas');
+      } else if (user?.role === 'encarregado') {
+        navigate('/meus-educandos');
+      }
+    }
+  }, [location.pathname, user?.role, navigate]);
+
   const allNavigation = [
-    { name: 'Dashboard', href: '/dashboard', icon: LayoutDashboard, roles: ['admin', 'professor', 'estudante', 'encarregado'] },
+    { name: 'Dashboard', href: '/dashboard', icon: LayoutDashboard, roles: ['admin'] },
     { name: 'Escolas', href: '/escolas', icon: School, roles: ['admin'] },
     { name: 'Turmas', href: '/turmas', icon: UsersRound, roles: ['admin', 'professor'] },
     { name: 'Matrículas', href: '/matriculas', icon: GraduationCap, roles: ['admin'] },
