@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import type { FormEvent } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, Link } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
 import { GraduationCap, Mail, Lock, AlertCircle } from 'lucide-react';
 
@@ -91,6 +91,15 @@ export default function Login() {
               {isLoading ? 'Entrando...' : 'Entrar'}
             </button>
           </form>
+
+          <div className="mt-6 pt-6 border-t border-gray-200">
+            <p className="text-sm text-gray-600 text-center">
+              Não tem conta?{' '}
+              <Link to="/register" className="text-blue-600 hover:text-blue-700 font-medium">
+                Criar conta
+              </Link>
+            </p>
+          </div>
 
           <div className="mt-6 pt-6 border-t border-gray-200">
             <p className="text-sm text-gray-600 text-center">

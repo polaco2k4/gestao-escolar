@@ -107,6 +107,11 @@ class AvaliacoesService {
     return response.data.data;
   }
 
+  async listMyAssessments(filters: AssessmentFilters = {}): Promise<AssessmentListResponse> {
+    const response = await api.get('/api/avaliacoes/my-assessments', { params: filters });
+    return response.data.data;
+  }
+
   async getById(id: string): Promise<Assessment> {
     const response = await api.get(`/api/avaliacoes/${id}`);
     return response.data.data;
@@ -128,6 +133,11 @@ class AvaliacoesService {
 
   async listGrades(assessmentId: string): Promise<Grade[]> {
     const response = await api.get(`/api/avaliacoes/${assessmentId}/grades`);
+    return response.data.data;
+  }
+
+  async listGradesByGuardian(assessmentId: string): Promise<Grade[]> {
+    const response = await api.get(`/api/avaliacoes/${assessmentId}/grades/my-students`);
     return response.data.data;
   }
 

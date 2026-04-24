@@ -3,6 +3,7 @@ import { AuthProvider } from './contexts/AuthContext';
 import ProtectedRoute from './components/ProtectedRoute';
 import Layout from './components/Layout';
 import Login from './pages/Login';
+import Register from './pages/Register';
 import Dashboard from './pages/Dashboard';
 import Matriculas from './pages/Matriculas';
 import MatriculaForm from './pages/MatriculaForm';
@@ -30,6 +31,9 @@ import Comunicacao from './pages/Comunicacao';
 import Salas from './pages/Salas';
 import Assiduidade from './pages/Assiduidade';
 import Documentos from './pages/Documentos';
+import Encarregados from './pages/Encarregados';
+import EncarregadoForm from './pages/EncarregadoForm';
+import MeusEducandos from './pages/MeusEducandos';
 
 function App() {
   return (
@@ -37,6 +41,7 @@ function App() {
       <BrowserRouter>
         <Routes>
           <Route path="/login" element={<Login />} />
+          <Route path="/register" element={<Register />} />
           <Route
             path="/*"
             element={
@@ -80,6 +85,10 @@ function App() {
             <Route path="comunicacao" element={<Comunicacao />} />
             <Route path="assiduidade" element={<Assiduidade />} />
             <Route path="documentos" element={<Documentos />} />
+            <Route path="meus-educandos" element={<MeusEducandos />} />
+            <Route path="encarregados" element={<Encarregados />} />
+            <Route path="encarregados/novo" element={<EncarregadoForm />} />
+            <Route path="encarregados/:id/editar" element={<EncarregadoForm />} />
             <Route path="relatorios" element={<div className="text-center py-12"><h2 className="text-2xl font-bold text-gray-900">Relatórios</h2><p className="text-gray-600 mt-2">Em desenvolvimento</p></div>} />
             <Route index element={<Navigate to="/dashboard" replace />} />
           </Route>

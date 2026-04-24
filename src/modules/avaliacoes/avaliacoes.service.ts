@@ -11,6 +11,60 @@ import {
 } from './avaliacoes.types';
 
 export class AvaliacoesService {
+  async listByGuardian(guardianId: string, page = 1, limit = 20, filters: AssessmentFilters = {}) {
+    const { offset } = paginate(page, limit);
+    
+    // Obter IDs dos estudantes associados ao encarregado
+    const students = await db('students')
+      .where('guardian_id', guardianId)
+      .select('id', 'user_id');
+    
+    if (students.length === 0) {
+      return { assessments: [], meta: buildPaginationMeta(0, page, limit) };
+    }
+    
+    const studentIds = students.map(s => s.id);
+    
+    // Obter as turmas dos estudantes
+    const enrollments = await db('enrollments')
+      .whereIn('student_id', studentIds)
+      .where('status', 'active')
+      .select('class_id', 'academic_year_id')
+      .distinct();
+    
+    if (enrollments.length === 0) {
+      return { assessments: [], meta: buildPaginationMeta(0, page, limit) };
+    }
+    
+    const classIds = enrollments.map(e => e.class_id);
+    
+    const query = db('assessments as a')
+      .join('subjects as sub', 'sub.id', 'a.subject_id')
+      .join('classes as c', 'c.id', 'a.class_id')
+      .join('teachers as t', 't.id', 'a.teacher_id')
+      .join('users as u', 'u.id', 't.user_id')
+      .join('assessment_types as at', 'at.id', 'a.assessment_type_id')
+      .whereIn('a.class_id', classIds)
+      .select('a.*', 'sub.name as subject_name', 'c.name as class_name', 'u.first_name as teacher_first_name', 'u.last_name as teacher_last_name', 'at.name as type_name');
+
+    if (filters.class_id) query.where('a.class_id', filters.class_id);
+    if (filters.subject_id) query.where('a.subject_id', filters.subject_id);
+    if (filters.trimester) query.where('a.trimester', filters.trimester);
+
+    const countQuery = db('assessments as a')
+      .whereIn('a.class_id', classIds)
+      .count('a.id as count');
+    
+    if (filters.class_id) countQuery.where('a.class_id', filters.class_id);
+    if (filters.subject_id) countQuery.where('a.subject_id', filters.subject_id);
+    if (filters.trimester) countQuery.where('a.trimester', filters.trimester);
+    
+    const [{ count }] = await countQuery;
+
+    const assessments = await query.orderBy('a.date', 'desc').limit(limit).offset(offset);
+    return { assessments, meta: buildPaginationMeta(Number(count), page, limit) };
+  }
+
   async list(page = 1, limit = 20, filters: AssessmentFilters = {}) {
     const { offset } = paginate(page, limit);
     const query = db('assessments as a')
@@ -107,6 +161,51 @@ export class AvaliacoesService {
       .orderBy('u.last_name');
 
     return students;
+  }
+
+  async listGradesByGuardian(assessmentId: string, guardianId: string) {
+    const assessment = await db('assessments as a')
+      .select('a.class_id', 'a.academic_year_id')
+      .where('a.id', assessmentId)
+      .first();
+
+    if (!assessment) throw new AppError('Avaliação não encontrada', 404);
+
+    // Obter IDs dos estudantes associados ao encarregado
+    const students = await db('students')
+      .where('guardian_id', guardianId)
+      .select('id');
+    
+    if (students.length === 0) return [];
+    
+    const studentIds = students.map(s => s.id);
+
+    const grades = await db('enrollments as e')
+      .join('students as s', 's.id', 'e.student_id')
+      .join('users as u', 'u.id', 's.user_id')
+      .leftJoin('grades as g', function() {
+        this.on('g.student_id', 's.id')
+          .andOn('g.assessment_id', db.raw('?', [assessmentId]));
+      })
+      .select(
+        's.id as student_id',
+        'u.first_name',
+        'u.last_name',
+        's.student_number',
+        'g.id',
+        'g.assessment_id',
+        'g.score',
+        'g.remarks',
+        'g.created_at',
+        'g.updated_at'
+      )
+      .where('e.class_id', assessment.class_id)
+      .where('e.academic_year_id', assessment.academic_year_id)
+      .where('e.status', 'active')
+      .whereIn('s.id', studentIds)
+      .orderBy('u.last_name');
+
+    return grades;
   }
 
   async saveGrades(assessmentId: string, grades: SaveGradeDTO[]) {

@@ -4,6 +4,63 @@ import { paginate, buildPaginationMeta, generateCode } from '../../utils/helpers
 import bcrypt from 'bcryptjs';
 
 export class StudentsService {
+  async listByGuardian(guardianId: string, page = 1, limit = 20, filters: any = {}) {
+    const { offset } = paginate(page, limit);
+    const query = db('students as s')
+      .join('users as u', 'u.id', 's.user_id')
+      .leftJoin('guardians as g', 'g.id', 's.guardian_id')
+      .leftJoin('users as gu', 'gu.id', 'g.user_id')
+      .where('s.guardian_id', guardianId)
+      .select(
+        's.id',
+        's.user_id',
+        's.student_number',
+        's.birth_date',
+        's.gender',
+        's.nationality',
+        's.address',
+        's.blood_type',
+        'u.first_name',
+        'u.last_name',
+        'u.email',
+        'u.phone',
+        'u.active',
+        'u.avatar_url',
+        's.created_at',
+        's.updated_at',
+        db.raw('CONCAT(gu.first_name, \' \', gu.last_name) as guardian_name')
+      );
+
+    if (filters.search) {
+      query.where(function () {
+        this.where('u.first_name', 'ilike', `%${filters.search}%`)
+          .orWhere('u.last_name', 'ilike', `%${filters.search}%`)
+          .orWhere('s.student_number', 'ilike', `%${filters.search}%`)
+          .orWhere('u.email', 'ilike', `%${filters.search}%`);
+      });
+    }
+
+    if (filters.gender) query.where('s.gender', filters.gender);
+    if (filters.active !== undefined) query.where('u.active', filters.active);
+
+    const [{ count }] = await db('students as s')
+      .join('users as u', 'u.id', 's.user_id')
+      .where('s.guardian_id', guardianId)
+      .where(function () {
+        if (filters.search) {
+          this.where('u.first_name', 'ilike', `%${filters.search}%`)
+            .orWhere('u.last_name', 'ilike', `%${filters.search}%`)
+            .orWhere('s.student_number', 'ilike', `%${filters.search}%`);
+        }
+      })
+      .count('s.id as count');
+
+    const students = await query.orderBy('u.first_name', 'asc').limit(limit).offset(offset);
+    const meta = buildPaginationMeta(Number(count), page, limit);
+
+    return { students, meta };
+  }
+
   async list(page = 1, limit = 20, filters: any = {}) {
     const { offset } = paginate(page, limit);
     const query = db('students as s')

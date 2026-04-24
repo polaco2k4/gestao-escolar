@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import studentsService from '../services/students.service';
 import type { StudentFormData } from '../services/students.service';
+import { guardiansService } from '../services/guardians.service';
 
 export default function EstudanteForm() {
   const { id } = useParams();
@@ -9,6 +10,10 @@ export default function EstudanteForm() {
   const isEdit = !!id;
 
   const [loading, setLoading] = useState(false);
+  const [guardians, setGuardians] = useState<any[]>([]);
+  const [guardianSearch, setGuardianSearch] = useState('');
+  const [selectedGuardian, setSelectedGuardian] = useState<any>(null);
+  const [showGuardianDropdown, setShowGuardianDropdown] = useState(false);
   const [formData, setFormData] = useState<StudentFormData>({
     first_name: '',
     last_name: '',
@@ -22,17 +27,36 @@ export default function EstudanteForm() {
     blood_type: '',
     medical_notes: '',
     password: '',
+    guardian_id: '',
   });
 
   useEffect(() => {
+    loadGuardians();
     if (isEdit && id) {
       loadStudent(id);
     }
   }, [id, isEdit]);
 
+  const loadGuardians = async () => {
+    try {
+      const data = await guardiansService.list();
+      setGuardians(data);
+    } catch (error) {
+      console.error('Erro ao carregar encarregados:', error);
+    }
+  };
+
   const loadStudent = async (studentId: string) => {
     try {
       const student = await studentsService.getById(studentId);
+      
+      // Carregar encarregado associado se existir
+      if (student.guardian_id) {
+        const guardian = await guardiansService.getById(student.guardian_id);
+        setSelectedGuardian(guardian);
+        setGuardianSearch(`${guardian.first_name} ${guardian.last_name}`);
+      }
+      
       setFormData({
         first_name: student.first_name,
         last_name: student.last_name,
@@ -45,6 +69,7 @@ export default function EstudanteForm() {
         address: student.address || '',
         blood_type: student.blood_type || '',
         medical_notes: student.medical_notes || '',
+        guardian_id: student.guardian_id || '',
       });
     } catch (error) {
       console.error('Erro ao carregar estudante:', error);
@@ -95,6 +120,23 @@ export default function EstudanteForm() {
     const { name, value } = e.target;
     setFormData(prev => ({ ...prev, [name]: value }));
   };
+
+  const handleGuardianSelect = (guardian: any) => {
+    setSelectedGuardian(guardian);
+    setGuardianSearch(`${guardian.first_name} ${guardian.last_name}`);
+    setFormData(prev => ({ ...prev, guardian_id: guardian.id }));
+    setShowGuardianDropdown(false);
+  };
+
+  const handleGuardianClear = () => {
+    setSelectedGuardian(null);
+    setGuardianSearch('');
+    setFormData(prev => ({ ...prev, guardian_id: '' }));
+  };
+
+  const filteredGuardians = guardians.filter(g =>
+    `${g.first_name} ${g.last_name} ${g.email || ''}`.toLowerCase().includes(guardianSearch.toLowerCase())
+  );
 
   return (
     <div className="max-w-4xl mx-auto">
@@ -264,6 +306,79 @@ export default function EstudanteForm() {
                   <p className="text-sm text-gray-500 mt-1">
                     Se deixar vazio, a password padrão será 'estudante123'
                   </p>
+                </div>
+              )}
+            </div>
+          </div>
+
+          <div className="border-b pb-6">
+            <h2 className="text-lg font-semibold text-gray-900 mb-4">Encarregado de Educação</h2>
+            <div className="relative">
+              <label htmlFor="guardian_search" className="block text-sm font-medium text-gray-700 mb-2">
+                Encarregado Responsável
+              </label>
+              <div className="relative">
+                <input
+                  type="text"
+                  id="guardian_search"
+                  value={guardianSearch}
+                  onChange={(e) => {
+                    setGuardianSearch(e.target.value);
+                    setShowGuardianDropdown(true);
+                  }}
+                  onFocus={() => setShowGuardianDropdown(true)}
+                  placeholder="Buscar encarregado por nome ou email..."
+                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                />
+                {selectedGuardian && (
+                  <button
+                    type="button"
+                    onClick={handleGuardianClear}
+                    className="absolute right-10 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600"
+                  >
+                    ✕
+                  </button>
+                )}
+              </div>
+              
+              {showGuardianDropdown && filteredGuardians.length > 0 && (
+                <div className="absolute z-10 w-full mt-1 bg-white border border-gray-300 rounded-lg shadow-lg max-h-60 overflow-y-auto">
+                  {filteredGuardians.map((guardian) => (
+                    <button
+                      type="button"
+                      key={guardian.id}
+                      onClick={() => handleGuardianSelect(guardian)}
+                      className="w-full px-4 py-3 text-left hover:bg-gray-50 border-b border-gray-100 last:border-b-0"
+                    >
+                      <div className="font-medium text-gray-900">
+                        {guardian.first_name} {guardian.last_name}
+                      </div>
+                      <div className="text-sm text-gray-500">
+                        {guardian.email || ''}
+                      </div>
+                    </button>
+                  ))}
+                </div>
+              )}
+              
+              {showGuardianDropdown && filteredGuardians.length === 0 && guardianSearch && (
+                <div className="absolute z-10 w-full mt-1 bg-white border border-gray-300 rounded-lg shadow-lg px-4 py-3 text-gray-500">
+                  Nenhum encarregado encontrado
+                </div>
+              )}
+              
+              {selectedGuardian && (
+                <div className="mt-2 p-2 bg-blue-50 rounded-lg flex items-center justify-between">
+                  <span className="text-sm text-blue-900">
+                    Encarregado: {selectedGuardian.first_name} {selectedGuardian.last_name}
+                  </span>
+                  <button
+                    type="button"
+                    onClick={handleGuardianClear}
+                    className="text-blue-600 hover:text-blue-800 text-sm"
+                  >
+                    Alterar
+                  </button>
                 </div>
               )}
             </div>

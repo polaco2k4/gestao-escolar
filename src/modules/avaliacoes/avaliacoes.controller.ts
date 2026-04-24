@@ -3,6 +3,7 @@ import { AuthRequest } from '../../middleware/auth';
 import { AvaliacoesService } from './avaliacoes.service';
 import { sendSuccess, sendError } from '../../utils/helpers';
 import logger from '../../utils/logger';
+import db from '../../config/database';
 
 const service = new AvaliacoesService();
 
@@ -14,6 +15,24 @@ export class AvaliacoesController {
       return sendSuccess(res, result);
     } catch (error: any) {
       logger.error('Erro ao listar avaliações:', error);
+      return sendError(res, error.message, error.statusCode || 500);
+    }
+  }
+
+  async listByGuardian(req: AuthRequest, res: Response) {
+    try {
+      // Obter o guardian_id do usuário logado (encarregado)
+      const guardian = await db('guardians').where('user_id', req.user?.id).first();
+      
+      if (!guardian) {
+        return sendError(res, 'Guardian não encontrado para este usuário', 404);
+      }
+
+      const { page = 1, limit = 20, ...filters } = req.query;
+      const result = await service.listByGuardian(guardian.id, Number(page), Number(limit), filters);
+      return sendSuccess(res, result);
+    } catch (error: any) {
+      logger.error('Erro ao listar avaliações do guardian:', error);
       return sendError(res, error.message, error.statusCode || 500);
     }
   }
@@ -57,6 +76,22 @@ export class AvaliacoesController {
   async listGrades(req: AuthRequest, res: Response) {
     try {
       const grades = await service.listGrades(req.params.assessmentId);
+      return sendSuccess(res, grades);
+    } catch (error: any) {
+      return sendError(res, error.message, error.statusCode || 500);
+    }
+  }
+
+  async listGradesByGuardian(req: AuthRequest, res: Response) {
+    try {
+      // Obter o guardian_id do usuário logado (encarregado)
+      const guardian = await db('guardians').where('user_id', req.user?.id).first();
+      
+      if (!guardian) {
+        return sendError(res, 'Guardian não encontrado para este usuário', 404);
+      }
+
+      const grades = await service.listGradesByGuardian(req.params.assessmentId, guardian.id);
       return sendSuccess(res, grades);
     } catch (error: any) {
       return sendError(res, error.message, error.statusCode || 500);

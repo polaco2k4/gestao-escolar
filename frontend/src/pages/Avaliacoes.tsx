@@ -35,7 +35,9 @@ export default function Avaliacoes() {
   const loadData = async () => {
     try {
       setLoading(true);
-      const response = await avaliacoesService.list(filters);
+      const response = user?.role === 'encarregado' 
+        ? await avaliacoesService.listMyAssessments(filters)
+        : await avaliacoesService.list(filters);
       setAssessments(response.assessments);
       setMeta(response.meta);
     } catch (error) {
@@ -273,7 +275,7 @@ export default function Avaliacoes() {
                             <Trash2 className="h-4 w-4" />
                           </button>
                         )}
-                        {user?.role === 'estudante' && (
+                        {(user?.role === 'estudante' || user?.role === 'encarregado') && (
                           <Link
                             to={`/avaliacoes/${assessment.id}/notas`}
                             className="inline-flex items-center text-green-600 hover:text-green-900"

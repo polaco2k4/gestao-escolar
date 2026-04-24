@@ -8,6 +8,7 @@ const controller = new AvaliacoesController();
 
 router.use(authenticate);
 
+router.get('/my-assessments', authorize('encarregado'), (req, res) => controller.listByGuardian(req, res));
 router.get('/sheets/list', authorize('admin', 'professor'), (req, res) => controller.listGradeSheets(req, res));
 router.post('/sheets', authorize('admin', 'professor'), (req, res) => controller.createGradeSheet(req, res));
 router.put('/sheets/:id/submit', authorize('professor'), (req, res) => controller.submitGradeSheet(req, res));
@@ -20,6 +21,7 @@ router.put('/:id', authorize('admin', 'professor'), (req, res) => controller.upd
 router.delete('/:id', authorize('admin', 'professor'), (req, res) => controller.delete(req, res));
 
 router.get('/:assessmentId/grades', (req, res) => controller.listGrades(req, res));
+router.get('/:assessmentId/grades/my-students', authorize('encarregado'), (req, res) => controller.listGradesByGuardian(req, res));
 router.post('/:assessmentId/grades', authorize('admin', 'professor'), (req, res) => controller.saveGrades(req, res));
 
 export default router;

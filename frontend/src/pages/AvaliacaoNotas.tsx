@@ -33,7 +33,9 @@ export default function AvaliacaoNotas() {
       setLoading(true);
       const [assessmentData, gradesData] = await Promise.all([
         avaliacoesService.getById(id!),
-        avaliacoesService.listGrades(id!),
+        user?.role === 'encarregado' 
+          ? avaliacoesService.listGradesByGuardian(id!)
+          : avaliacoesService.listGrades(id!),
       ]);
       
       setAssessment(assessmentData);
@@ -234,11 +236,11 @@ export default function AvaliacaoNotas() {
                           step="0.5"
                           value={grade.score || ''}
                           onChange={(e) => handleScoreChange(grade.student_id, e.target.value)}
-                          readOnly={user?.role === 'estudante'}
-                          disabled={user?.role === 'estudante'}
+                          readOnly={user?.role === 'estudante' || user?.role === 'encarregado'}
+                          disabled={user?.role === 'estudante' || user?.role === 'encarregado'}
                           className={`w-20 rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm ${
                             grade.score !== undefined ? getGradeColor(grade.score, assessment.max_score) : ''
-                          } ${user?.role === 'estudante' ? 'bg-gray-100 cursor-not-allowed' : ''}`}
+                          } ${(user?.role === 'estudante' || user?.role === 'encarregado') ? 'bg-gray-100 cursor-not-allowed' : ''}`}
                           placeholder="0.0"
                         />
                         <span className="ml-2 text-sm text-gray-500">
@@ -250,10 +252,10 @@ export default function AvaliacaoNotas() {
                           type="text"
                           value={grade.remarks || ''}
                           onChange={(e) => handleRemarksChange(grade.student_id, e.target.value)}
-                          readOnly={user?.role === 'estudante'}
-                          disabled={user?.role === 'estudante'}
+                          readOnly={user?.role === 'estudante' || user?.role === 'encarregado'}
+                          disabled={user?.role === 'estudante' || user?.role === 'encarregado'}
                           className={`w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm ${
-                            user?.role === 'estudante' ? 'bg-gray-100 cursor-not-allowed' : ''
+                            (user?.role === 'estudante' || user?.role === 'encarregado') ? 'bg-gray-100 cursor-not-allowed' : ''
                           }`}
                           placeholder="Observações opcionais"
                         />

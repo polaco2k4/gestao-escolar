@@ -3,6 +3,7 @@ import { AuthRequest } from '../../middleware/auth';
 import { StudentsService } from './students.service';
 import { sendSuccess, sendError } from '../../utils/helpers';
 import logger from '../../utils/logger';
+import db from '../../config/database';
 
 const service = new StudentsService();
 
@@ -14,6 +15,24 @@ export class StudentsController {
       return sendSuccess(res, result);
     } catch (error: any) {
       logger.error('Erro ao listar estudantes:', error);
+      return sendError(res, error.message, error.statusCode || 500);
+    }
+  }
+
+  async listByGuardian(req: AuthRequest, res: Response) {
+    try {
+      // Obter o guardian_id do usuário logado (encarregado)
+      const guardian = await db('guardians').where('user_id', req.user?.id).first();
+      
+      if (!guardian) {
+        return sendError(res, 'Guardian não encontrado para este usuário', 404);
+      }
+
+      const { page = 1, limit = 20, ...filters } = req.query;
+      const result = await service.listByGuardian(guardian.id, Number(page), Number(limit), filters);
+      return sendSuccess(res, result);
+    } catch (error: any) {
+      logger.error('Erro ao listar estudantes do guardian:', error);
       return sendError(res, error.message, error.statusCode || 500);
     }
   }
