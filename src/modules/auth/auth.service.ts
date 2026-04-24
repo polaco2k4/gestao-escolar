@@ -110,11 +110,14 @@ export class AuthService {
   }
 
   private async generateTokens(user: any) {
-    const payload = { id: user.id, email: user.email, role: user.role };
+    const payload = { id: user.id, email: user.email, role: user.role, school_id: user.school_id };
 
-    const access_token = jwt.sign(payload, process.env.JWT_SECRET || 'secret', {
-      expiresIn: process.env.JWT_EXPIRES_IN || '24h',
-    });
+    // @ts-ignore - JWT types issue
+    const access_token = jwt.sign(
+      payload, 
+      process.env.JWT_SECRET || 'secret', 
+      { expiresIn: process.env.JWT_EXPIRES_IN || '24h' }
+    );
 
     const refresh_token = uuidv4();
     const expiresAt = new Date();

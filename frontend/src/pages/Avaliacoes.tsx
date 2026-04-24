@@ -5,8 +5,10 @@ import avaliacoesService from '../services/avaliacoes.service';
 import type { Assessment, AssessmentFilters } from '../services/avaliacoes.service';
 import classesService from '../services/classes.service';
 import type { Class } from '../services/classes.service';
+import { useAuth } from '../contexts/AuthContext';
 
 export default function Avaliacoes() {
+  const { user } = useAuth();
   const [assessments, setAssessments] = useState<Assessment[]>([]);
   const [classes, setClasses] = useState<Class[]>([]);
   const [loading, setLoading] = useState(true);
@@ -108,13 +110,15 @@ export default function Avaliacoes() {
             Gerir avaliações, testes e notas dos estudantes
           </p>
         </div>
-        <Link
-          to="/avaliacoes/novo"
-          className="inline-flex items-center px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
-        >
-          <Plus className="h-5 w-5 mr-2" />
-          Nova Avaliação
-        </Link>
+        {(user?.role === 'admin' || user?.role === 'professor') && (
+          <Link
+            to="/avaliacoes/novo"
+            className="inline-flex items-center px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
+          >
+            <Plus className="h-5 w-5 mr-2" />
+            Nova Avaliação
+          </Link>
+        )}
       </div>
 
       <div className="bg-white shadow rounded-lg">
@@ -242,27 +246,36 @@ export default function Avaliacoes() {
                         {formatDate(assessment.date)}
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium space-x-2">
-                        <Link
-                          to={`/avaliacoes/${assessment.id}/notas`}
-                          className="inline-flex items-center text-green-600 hover:text-green-900"
-                          title="Gerir Notas"
-                        >
-                          <FileText className="h-4 w-4" />
-                        </Link>
-                        <Link
-                          to={`/avaliacoes/${assessment.id}/editar`}
-                          className="inline-flex items-center text-blue-600 hover:text-blue-900"
-                          title="Editar"
-                        >
-                          <Pencil className="h-4 w-4" />
-                        </Link>
-                        <button
-                          onClick={() => handleDelete(assessment.id)}
-                          className="inline-flex items-center text-red-600 hover:text-red-900"
-                          title="Eliminar"
-                        >
-                          <Trash2 className="h-4 w-4" />
-                        </button>
+                        {(user?.role === 'admin' || user?.role === 'professor') && (
+                          <Link
+                            to={`/avaliacoes/${assessment.id}/notas`}
+                            className="inline-flex items-center text-green-600 hover:text-green-900"
+                            title="Gerir Notas"
+                          >
+                            <FileText className="h-4 w-4" />
+                          </Link>
+                        )}
+                        {(user?.role === 'admin' || user?.role === 'professor') && (
+                          <Link
+                            to={`/avaliacoes/${assessment.id}/editar`}
+                            className="inline-flex items-center text-blue-600 hover:text-blue-900"
+                            title="Editar"
+                          >
+                            <Pencil className="h-4 w-4" />
+                          </Link>
+                        )}
+                        {(user?.role === 'admin' || user?.role === 'professor') && (
+                          <button
+                            onClick={() => handleDelete(assessment.id)}
+                            className="inline-flex items-center text-red-600 hover:text-red-900"
+                            title="Eliminar"
+                          >
+                            <Trash2 className="h-4 w-4" />
+                          </button>
+                        )}
+                        {user?.role === 'estudante' && (
+                          <span className="text-sm text-gray-500">Visualização</span>
+                        )}
                       </td>
                     </tr>
                   ))

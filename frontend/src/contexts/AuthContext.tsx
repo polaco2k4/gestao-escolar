@@ -41,6 +41,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       const userData = response.data.data || response.data;
       setUser(userData);
       localStorage.setItem('user', JSON.stringify(userData));
+      if (userData.school_id) {
+        localStorage.setItem('school_id', userData.school_id);
+      }
     } catch (error) {
       console.error('Erro ao carregar perfil:', error);
       logout();
@@ -54,6 +57,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       
       localStorage.setItem('token', access_token);
       localStorage.setItem('user', JSON.stringify(userData));
+      if (userData.school_id) {
+        localStorage.setItem('school_id', userData.school_id);
+      }
       setUser(userData);
     } catch (error: any) {
       throw new Error(error.response?.data?.message || 'Erro ao fazer login');
@@ -63,6 +69,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const logout = () => {
     localStorage.removeItem('token');
     localStorage.removeItem('user');
+    localStorage.removeItem('school_id');
     setUser(null);
     window.location.href = '/login';
   };

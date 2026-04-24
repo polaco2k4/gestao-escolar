@@ -18,9 +18,22 @@ export class AssessmentTypesService {
     return type;
   }
 
-  async create(data: any) {
+  async create(data: any, school_id?: string) {
+    // Se school_id não foi fornecido, pegar a primeira escola disponível
+    let finalSchoolId = school_id;
+    
+    if (!finalSchoolId) {
+      const firstSchool = await db('schools').select('id').first();
+      if (firstSchool) {
+        finalSchoolId = firstSchool.id;
+      } else {
+        throw new AppError('Nenhuma escola encontrada no sistema', 400);
+      }
+    }
+    
+    const insertData = { ...data, school_id: finalSchoolId };
     const [type] = await db('assessment_types')
-      .insert(data)
+      .insert(insertData)
       .returning('*');
     return type;
   }

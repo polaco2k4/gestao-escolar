@@ -33,7 +33,11 @@ export class FinanceiroService {
     if (filters.status) query.where('sf.status', filters.status);
     if (filters.academic_year_id) query.where('sf.academic_year_id', filters.academic_year_id);
 
-    const [{ count }] = await db('student_fees').count('id as count');
+    const countQuery = db('student_fees as sf');
+    if (filters.status) countQuery.where('sf.status', filters.status);
+    if (filters.academic_year_id) countQuery.where('sf.academic_year_id', filters.academic_year_id);
+    const [{ count }] = await countQuery.count('sf.id as count');
+    
     const fees = await query.orderBy('sf.due_date', 'desc').limit(limit).offset(offset);
     return { fees, meta: buildPaginationMeta(Number(count), page, limit) };
   }
@@ -48,7 +52,10 @@ export class FinanceiroService {
   }
 
   async createStudentFee(data: any) {
-    const [fee] = await db('student_fees').insert(data).returning('*');
+    const [fee] = await db('student_fees').insert({
+      ...data,
+      status: data.status || 'pending',
+    }).returning('*');
     return fee;
   }
 
@@ -76,16 +83,23 @@ export class FinanceiroService {
   async listPayments(page = 1, limit = 20, filters: any = {}) {
     const { offset } = paginate(page, limit);
     const query = db('payments as p')
-      .join('students as s', 's.id', 'p.student_id')
-      .join('users as u', 'u.id', 's.user_id')
       .join('student_fees as sf', 'sf.id', 'p.student_fee_id')
+      .join('students as s', 's.id', 'sf.student_id')
+      .join('users as u', 'u.id', 's.user_id')
       .join('fee_types as ft', 'ft.id', 'sf.fee_type_id')
-      .select('p.*', 'u.first_name', 'u.last_name', 's.student_number', 'ft.name as fee_type_name');
+      .select('p.*', 'u.first_name', 'u.last_name', 'ft.name as fee_name');
 
     if (filters.student_id) query.where('p.student_id', filters.student_id);
-    if (filters.payment_method) query.where('p.payment_method', filters.payment_method);
+    if (filters.school_id) query.where('p.school_id', filters.school_id);
+    if (filters.start_date) query.where('p.payment_date', '>=', filters.start_date);
+    if (filters.end_date) query.where('p.payment_date', '<=', filters.end_date);
 
-    const [{ count }] = await db('payments').count('id as count');
+    const countQuery = db('payments as p');
+    if (filters.school_id) countQuery.where('p.school_id', filters.school_id);
+    if (filters.start_date) countQuery.where('p.payment_date', '>=', filters.start_date);
+    if (filters.end_date) countQuery.where('p.payment_date', '<=', filters.end_date);
+    const [{ count }] = await countQuery.count('p.id as count');
+    
     const payments = await query.orderBy('p.payment_date', 'desc').limit(limit).offset(offset);
     return { payments, meta: buildPaginationMeta(Number(count), page, limit) };
   }
@@ -124,26 +138,35 @@ export class FinanceiroService {
   }
 
   // --- Summary ---
-  async getFinancialSummary(schoolId: string, academicYearId?: string) {
+  async getFinancialSummary(schoolId?: string, academicYearId?: string) {
     const baseQuery = db('student_fees as sf').where('sf.status', '!=', 'cancelled');
     if (academicYearId) baseQuery.where('sf.academic_year_id', academicYearId);
 
     const [totalFees] = await baseQuery.clone().sum('sf.amount as total');
-    const [totalPaid] = await db('payments as p')
+    
+    let paymentQuery = db('payments as p')
       .join('student_fees as sf', 'sf.id', 'p.student_fee_id')
-      .where('p.school_id', schoolId)
       .sum('p.amount as total');
+    
+    if (schoolId) paymentQuery.where('p.school_id', schoolId);
+    const [totalPaid] = await paymentQuery;
 
-    const [overdue] = await db('student_fees')
-      .where('status', 'pending')
-      .where('due_date', '<', new Date())
-      .count('id as count');
+    const overdueQuery = db('student_fees as sf')
+      .where('sf.status', 'pending')
+      .where('sf.due_date', '<', new Date());
+    
+    const [overdueResult] = await overdueQuery.sum('sf.amount as total');
+    const overdueAmount = Number(overdueResult?.total) || 0;
+
+    const totalFeesAmount = Number(totalFees?.total) || 0;
+    const totalPaidAmount = Number(totalPaid?.total) || 0;
 
     return {
-      total_fees: Number(totalFees.total) || 0,
-      total_paid: Number(totalPaid.total) || 0,
-      total_pending: (Number(totalFees.total) || 0) - (Number(totalPaid.total) || 0),
-      overdue_count: Number(overdue.count) || 0,
+      total_expected: totalFeesAmount,
+      total_paid: totalPaidAmount,
+      total_pending: totalFeesAmount - totalPaidAmount,
+      total_overdue: overdueAmount,
+      payment_rate: totalFeesAmount > 0 ? (totalPaidAmount / totalFeesAmount) * 100 : 0,
     };
   }
 }

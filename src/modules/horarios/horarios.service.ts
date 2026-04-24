@@ -38,12 +38,14 @@ export class HorariosService {
   }
 
   async createSchedule(data: any) {
-    const conflict = await db('schedules')
-      .where({ room_id: data.room_id, day_of_week: data.day_of_week })
-      .where('start_time', '<', data.end_time)
-      .where('end_time', '>', data.start_time)
-      .first();
-    if (conflict) throw new AppError('Conflito de horário na sala indicada', 409);
+    if (data.room_id) {
+      const conflict = await db('schedules')
+        .where({ room_id: data.room_id, day_of_week: data.day_of_week })
+        .where('start_time', '<', data.end_time)
+        .where('end_time', '>', data.start_time)
+        .first();
+      if (conflict) throw new AppError('Conflito de horário na sala indicada', 409);
+    }
 
     const [schedule] = await db('schedules').insert(data).returning('*');
     return schedule;
@@ -164,5 +166,10 @@ export class HorariosService {
     const [updated] = await db('rooms').where({ id }).update({ ...data, updated_at: new Date() }).returning('*');
     if (!updated) throw new AppError('Sala não encontrada', 404);
     return updated;
+  }
+
+  async deleteRoom(id: string) {
+    const deleted = await db('rooms').where({ id }).delete();
+    if (!deleted) throw new AppError('Sala não encontrada', 404);
   }
 }

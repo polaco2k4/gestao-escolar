@@ -18,12 +18,18 @@ import TurmaEstudantes from './pages/TurmaEstudantes';
 import Avaliacoes from './pages/Avaliacoes';
 import AvaliacaoForm from './pages/AvaliacaoForm';
 import AvaliacaoNotas from './pages/AvaliacaoNotas';
+import AssessmentTypes from './pages/AssessmentTypes';
+import AssessmentTypeForm from './pages/AssessmentTypeForm';
 import Subjects from './pages/Subjects';
 import SubjectForm from './pages/SubjectForm';
 import Teachers from './pages/Teachers';
 import TeacherForm from './pages/TeacherForm';
-import AssessmentTypes from './pages/AssessmentTypes';
-import AssessmentTypeForm from './pages/AssessmentTypeForm';
+import Financeiro from './pages/Financeiro';
+import Horarios from './pages/Horarios';
+import Comunicacao from './pages/Comunicacao';
+import Salas from './pages/Salas';
+import Assiduidade from './pages/Assiduidade';
+import Documentos from './pages/Documentos';
 
 function App() {
   return (
@@ -55,10 +61,6 @@ function App() {
             <Route path="turmas/novo" element={<TurmaForm />} />
             <Route path="turmas/:id/editar" element={<TurmaForm />} />
             <Route path="turmas/:id/estudantes" element={<TurmaEstudantes />} />
-            <Route path="avaliacoes" element={<Avaliacoes />} />
-            <Route path="avaliacoes/novo" element={<AvaliacaoForm />} />
-            <Route path="avaliacoes/:id/editar" element={<AvaliacaoForm />} />
-            <Route path="avaliacoes/:id/notas" element={<AvaliacaoNotas />} />
             <Route path="subjects" element={<Subjects />} />
             <Route path="subjects/novo" element={<SubjectForm />} />
             <Route path="subjects/:id/editar" element={<SubjectForm />} />
@@ -68,11 +70,16 @@ function App() {
             <Route path="assessment-types" element={<AssessmentTypes />} />
             <Route path="assessment-types/novo" element={<AssessmentTypeForm />} />
             <Route path="assessment-types/:id/editar" element={<AssessmentTypeForm />} />
-            <Route path="horarios" element={<div className="text-center py-12"><h2 className="text-2xl font-bold text-gray-900">Horários</h2><p className="text-gray-600 mt-2">Em desenvolvimento</p></div>} />
-            <Route path="financeiro" element={<div className="text-center py-12"><h2 className="text-2xl font-bold text-gray-900">Financeiro</h2><p className="text-gray-600 mt-2">Em desenvolvimento</p></div>} />
-            <Route path="comunicacao" element={<div className="text-center py-12"><h2 className="text-2xl font-bold text-gray-900">Comunicação</h2><p className="text-gray-600 mt-2">Em desenvolvimento</p></div>} />
-            <Route path="assiduidade" element={<div className="text-center py-12"><h2 className="text-2xl font-bold text-gray-900">Assiduidade</h2><p className="text-gray-600 mt-2">Em desenvolvimento</p></div>} />
-            <Route path="documentos" element={<div className="text-center py-12"><h2 className="text-2xl font-bold text-gray-900">Documentos</h2><p className="text-gray-600 mt-2">Em desenvolvimento</p></div>} />
+            <Route path="avaliacoes" element={<Avaliacoes />} />
+            <Route path="avaliacoes/novo" element={<AvaliacaoForm />} />
+            <Route path="avaliacoes/:id/editar" element={<AvaliacaoForm />} />
+            <Route path="avaliacoes/:id/notas" element={<AvaliacaoNotas />} />
+            <Route path="horarios" element={<Horarios />} />
+            <Route path="salas" element={<Salas />} />
+            <Route path="financeiro" element={<Financeiro />} />
+            <Route path="comunicacao" element={<Comunicacao />} />
+            <Route path="assiduidade" element={<Assiduidade />} />
+            <Route path="documentos" element={<Documentos />} />
             <Route path="relatorios" element={<div className="text-center py-12"><h2 className="text-2xl font-bold text-gray-900">Relatórios</h2><p className="text-gray-600 mt-2">Em desenvolvimento</p></div>} />
             <Route index element={<Navigate to="/dashboard" replace />} />
           </Route>

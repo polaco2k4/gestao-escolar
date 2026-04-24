@@ -24,6 +24,20 @@ export class AssiduidadeService {
     return { records, meta: buildPaginationMeta(Number(count), page, limit) };
   }
 
+  async getById(id: string) {
+    const record = await db('attendance_records as ar')
+      .join('students as s', 's.id', 'ar.student_id')
+      .join('users as u', 'u.id', 's.user_id')
+      .join('schedules as sch', 'sch.id', 'ar.schedule_id')
+      .join('subjects as sub', 'sub.id', 'sch.subject_id')
+      .leftJoin('classes as c', 'c.id', 'sch.class_id')
+      .select('ar.*', 'u.first_name', 'u.last_name', 's.student_number', 'sub.name as subject_name', 'c.name as class_name')
+      .where('ar.id', id)
+      .first();
+    if (!record) throw new AppError('Registo de presença não encontrado', 404);
+    return record;
+  }
+
   async getByStudent(studentId: string, filters: any = {}) {
     const query = db('attendance_records as ar')
       .join('schedules as sch', 'sch.id', 'ar.schedule_id')
@@ -83,6 +97,12 @@ export class AssiduidadeService {
     return updated;
   }
 
+  async delete(id: string) {
+    const deleted = await db('attendance_records').where({ id }).delete();
+    if (!deleted) throw new AppError('Registo de presença não encontrado', 404);
+    return { message: 'Registo de presença eliminado com sucesso' };
+  }
+
   async submitJustification(data: any) {
     const attendance = await db('attendance_records').where({ id: data.attendance_id }).first();
     if (!attendance) throw new AppError('Registo de presença não encontrado', 404);
@@ -117,6 +137,12 @@ export class AssiduidadeService {
     }
 
     return justification;
+  }
+
+  async deleteJustification(id: string) {
+    const deleted = await db('attendance_justifications').where({ id }).delete();
+    if (!deleted) throw new AppError('Justificação não encontrada', 404);
+    return { message: 'Justificação eliminada com sucesso' };
   }
 
   async getStudentSummary(studentId: string, academicYearId?: string) {

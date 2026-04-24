@@ -40,6 +40,7 @@ export class FinanceiroController {
       const result = await service.listStudentFees(Number(page), Number(limit), filters);
       return sendSuccess(res, result);
     } catch (error: any) {
+      logger.error('Erro ao listar propinas:', error);
       return sendError(res, error.message, error.statusCode || 500);
     }
   }
@@ -78,6 +79,7 @@ export class FinanceiroController {
       const result = await service.listPayments(Number(page), Number(limit), filters);
       return sendSuccess(res, result);
     } catch (error: any) {
+      logger.error('Erro ao listar pagamentos:', error);
       return sendError(res, error.message, error.statusCode || 500);
     }
   }
@@ -109,6 +111,7 @@ export class FinanceiroController {
       );
       return sendSuccess(res, summary);
     } catch (error: any) {
+      logger.error('Erro ao obter resumo financeiro:', error);
       return sendError(res, error.message, error.statusCode || 500);
     }
   }

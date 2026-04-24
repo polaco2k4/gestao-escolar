@@ -26,7 +26,7 @@ export class AssessmentTypesController {
 
   async create(req: AuthRequest, res: Response) {
     try {
-      const type = await service.create(req.body);
+      const type = await service.create(req.body, req.user?.school_id);
       return sendSuccess(res, type, 'Tipo de avaliação criado', 201);
     } catch (error: any) {
       return sendError(res, error.message, error.statusCode || 500);

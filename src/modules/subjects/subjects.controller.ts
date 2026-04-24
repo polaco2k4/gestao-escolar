@@ -26,7 +26,7 @@ export class SubjectsController {
 
   async create(req: AuthRequest, res: Response) {
     try {
-      const subject = await service.create(req.body);
+      const subject = await service.create(req.body, req.user?.school_id);
       return sendSuccess(res, subject, 'Disciplina criada', 201);
     } catch (error: any) {
       return sendError(res, error.message, error.statusCode || 500);

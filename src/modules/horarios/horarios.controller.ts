@@ -128,9 +128,11 @@ export class HorariosController {
 
   async createRoom(req: AuthRequest, res: Response) {
     try {
+      logger.info('Creating room with data:', req.body);
       const room = await service.createRoom(req.body);
       return sendSuccess(res, room, 'Sala criada', 201);
     } catch (error: any) {
+      logger.error('Error creating room:', error);
       return sendError(res, error.message, error.statusCode || 500);
     }
   }
@@ -139,6 +141,15 @@ export class HorariosController {
     try {
       const room = await service.updateRoom(req.params.id, req.body);
       return sendSuccess(res, room, 'Sala actualizada');
+    } catch (error: any) {
+      return sendError(res, error.message, error.statusCode || 500);
+    }
+  }
+
+  async deleteRoom(req: AuthRequest, res: Response) {
+    try {
+      await service.deleteRoom(req.params.id);
+      return sendSuccess(res, null, 'Sala eliminada');
     } catch (error: any) {
       return sendError(res, error.message, error.statusCode || 500);
     }

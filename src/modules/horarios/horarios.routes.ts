@@ -26,6 +26,7 @@ router.put('/subjects/:id', authorize('admin'), controller.updateSubject);
 router.get('/rooms', controller.listRooms);
 router.post('/rooms', authorize('admin'), controller.createRoom);
 router.put('/rooms/:id', authorize('admin'), controller.updateRoom);
+router.delete('/rooms/:id', authorize('admin'), controller.deleteRoom);
 
 router.get('/by-class/:classId', controller.getScheduleByClass);
 router.get('/by-teacher/:teacherId', controller.getScheduleByTeacher);

@@ -18,7 +18,8 @@ import {
   UsersRound,
   Book,
   UserCheck,
-  ClipboardCheck
+  ClipboardCheck,
+  MapPin
 } from 'lucide-react';
 import { useState } from 'react';
 
@@ -27,23 +28,29 @@ export default function Layout() {
   const location = useLocation();
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
 
-  const navigation = [
-    { name: 'Dashboard', href: '/dashboard', icon: LayoutDashboard },
-    { name: 'Escolas', href: '/escolas', icon: School },
-    { name: 'Turmas', href: '/turmas', icon: UsersRound },
-    { name: 'Matrículas', href: '/matriculas', icon: GraduationCap },
-    { name: 'Estudantes', href: '/estudantes', icon: Users },
-    { name: 'Disciplinas', href: '/subjects', icon: Book },
-    { name: 'Professores', href: '/teachers', icon: UserCheck },
-    { name: 'Tipos de Avaliação', href: '/assessment-types', icon: ClipboardCheck },
-    { name: 'Avaliações', href: '/avaliacoes', icon: FileText },
-    { name: 'Horários', href: '/horarios', icon: Calendar },
-    { name: 'Financeiro', href: '/financeiro', icon: DollarSign },
-    { name: 'Comunicação', href: '/comunicacao', icon: MessageSquare },
-    { name: 'Assiduidade', href: '/assiduidade', icon: ClipboardList },
-    { name: 'Documentos', href: '/documentos', icon: BookOpen },
-    { name: 'Relatórios', href: '/relatorios', icon: BarChart },
+  const allNavigation = [
+    { name: 'Dashboard', href: '/dashboard', icon: LayoutDashboard, roles: ['admin', 'professor', 'estudante', 'encarregado'] },
+    { name: 'Escolas', href: '/escolas', icon: School, roles: ['admin'] },
+    { name: 'Turmas', href: '/turmas', icon: UsersRound, roles: ['admin', 'professor'] },
+    { name: 'Matrículas', href: '/matriculas', icon: GraduationCap, roles: ['admin'] },
+    { name: 'Estudantes', href: '/estudantes', icon: Users, roles: ['admin', 'professor'] },
+    { name: 'Disciplinas', href: '/subjects', icon: Book, roles: ['admin', 'professor', 'estudante'] },
+    { name: 'Professores', href: '/teachers', icon: UserCheck, roles: ['admin'] },
+    { name: 'Tipos de Avaliação', href: '/assessment-types', icon: ClipboardCheck, roles: ['admin'] },
+    { name: 'Avaliações', href: '/avaliacoes', icon: FileText, roles: ['admin', 'professor', 'estudante'] },
+    { name: 'Horários', href: '/horarios', icon: Calendar, roles: ['admin', 'professor', 'estudante'] },
+    { name: 'Salas', href: '/salas', icon: MapPin, roles: ['admin'] },
+    { name: 'Financeiro', href: '/financeiro', icon: DollarSign, roles: ['admin'] },
+    { name: 'Comunicação', href: '/comunicacao', icon: MessageSquare, roles: ['admin', 'professor', 'estudante', 'encarregado'] },
+    { name: 'Assiduidade', href: '/assiduidade', icon: ClipboardList, roles: ['admin', 'professor', 'estudante'] },
+    { name: 'Documentos', href: '/documentos', icon: BookOpen, roles: ['admin', 'professor', 'estudante', 'encarregado'] },
+    { name: 'Relatórios', href: '/relatorios', icon: BarChart, roles: ['admin', 'professor'] },
   ];
+
+  // Filtrar navegação baseado na role do usuário
+  const navigation = allNavigation.filter(item => 
+    item.roles.includes(user?.role || '')
+  );
 
   const isActive = (path: string) => location.pathname === path;
 

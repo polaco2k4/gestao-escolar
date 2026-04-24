@@ -6,6 +6,7 @@ export interface AuthPayload {
   id: string;
   email: string;
   role: 'admin' | 'professor' | 'estudante' | 'encarregado';
+  school_id?: string;
 }
 
 export interface AuthRequest extends Request {

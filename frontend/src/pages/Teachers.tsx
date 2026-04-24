@@ -1,8 +1,10 @@
 import { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
+import { useAuth } from '../contexts/AuthContext';
 import teachersService, { type Teacher } from '../services/teachers.service';
 
 export default function Teachers() {
+  const { user } = useAuth();
   const [teachers, setTeachers] = useState<Teacher[]>([]);
   const [loading, setLoading] = useState(true);
 
@@ -38,12 +40,14 @@ export default function Teachers() {
     <div className="space-y-6">
       <div className="flex justify-between items-center">
         <h1 className="text-3xl font-bold text-gray-900">Professores</h1>
-        <Link
-          to="/teachers/novo"
-          className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg font-medium transition-colors"
-        >
-          + Novo Professor
-        </Link>
+        {user?.role === 'admin' && (
+          <Link
+            to="/teachers/novo"
+            className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg font-medium transition-colors"
+          >
+            + Novo Professor
+          </Link>
+        )}
       </div>
 
       <div className="bg-white rounded-lg shadow p-6">
@@ -95,19 +99,25 @@ export default function Teachers() {
                     <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
                       {teacher.department || '-'}
                     </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm font-medium space-x-2">
-                      <Link
-                        to={`/teachers/${teacher.id}/editar`}
-                        className="text-indigo-600 hover:text-indigo-900"
-                      >
-                        Editar
-                      </Link>
-                      <button
-                        onClick={() => handleDelete(teacher.id)}
-                        className="text-red-600 hover:text-red-900"
-                      >
-                        Eliminar
-                      </button>
+                    <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
+                      {user?.role === 'admin' ? (
+                        <>
+                          <Link
+                            to={`/teachers/${teacher.id}/editar`}
+                            className="text-blue-600 hover:text-blue-900 mr-4"
+                          >
+                            Editar
+                          </Link>
+                          <button
+                            onClick={() => handleDelete(teacher.id)}
+                            className="text-red-600 hover:text-red-900"
+                          >
+                            Eliminar
+                          </button>
+                        </>
+                      ) : (
+                        <span className="text-sm text-gray-500">Visualização</span>
+                      )}
                     </td>
                   </tr>
                 ))}

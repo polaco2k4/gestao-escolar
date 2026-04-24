@@ -18,6 +18,15 @@ export class AssiduidadeController {
     }
   }
 
+  async getById(req: AuthRequest, res: Response) {
+    try {
+      const record = await service.getById(req.params.id);
+      return sendSuccess(res, record);
+    } catch (error: any) {
+      return sendError(res, error.message, error.statusCode || 500);
+    }
+  }
+
   async getByStudent(req: AuthRequest, res: Response) {
     try {
       const records = await service.getByStudent(req.params.studentId, req.query);
@@ -63,6 +72,15 @@ export class AssiduidadeController {
     }
   }
 
+  async delete(req: AuthRequest, res: Response) {
+    try {
+      const result = await service.delete(req.params.id);
+      return sendSuccess(res, result, 'Registo eliminado');
+    } catch (error: any) {
+      return sendError(res, error.message, error.statusCode || 500);
+    }
+  }
+
   async listJustifications(req: AuthRequest, res: Response) {
     try {
       const justifications = await service.listJustifications(req.query);
@@ -85,6 +103,15 @@ export class AssiduidadeController {
     try {
       const justification = await service.reviewJustification(req.params.id, req.user!.id, req.body.status);
       return sendSuccess(res, justification, 'Justificação revista');
+    } catch (error: any) {
+      return sendError(res, error.message, error.statusCode || 500);
+    }
+  }
+
+  async deleteJustification(req: AuthRequest, res: Response) {
+    try {
+      const result = await service.deleteJustification(req.params.id);
+      return sendSuccess(res, result, 'Justificação eliminada');
     } catch (error: any) {
       return sendError(res, error.message, error.statusCode || 500);
     }

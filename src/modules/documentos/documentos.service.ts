@@ -14,10 +14,22 @@ export class DocumentosService {
     return template;
   }
 
+  async getTemplateById(id: string) {
+    const template = await db('document_templates').where({ id }).first();
+    if (!template) throw new AppError('Modelo não encontrado', 404);
+    return template;
+  }
+
   async updateTemplate(id: string, data: any) {
     const [updated] = await db('document_templates').where({ id }).update({ ...data, updated_at: new Date() }).returning('*');
     if (!updated) throw new AppError('Modelo não encontrado', 404);
     return updated;
+  }
+
+  async deleteTemplate(id: string) {
+    const deleted = await db('document_templates').where({ id }).delete();
+    if (!deleted) throw new AppError('Modelo não encontrado', 404);
+    return { message: 'Modelo eliminado com sucesso' };
   }
 
   async listDocuments(page = 1, limit = 20, filters: any = {}) {
@@ -73,5 +85,11 @@ export class DocumentosService {
       .returning('*');
     if (!updated) throw new AppError('Documento não encontrado', 404);
     return updated;
+  }
+
+  async deleteDocument(id: string) {
+    const deleted = await db('documents').where({ id }).delete();
+    if (!deleted) throw new AppError('Documento não encontrado', 404);
+    return { message: 'Documento eliminado com sucesso' };
   }
 }

@@ -15,6 +15,15 @@ export class DocumentosController {
     }
   }
 
+  async getTemplateById(req: AuthRequest, res: Response) {
+    try {
+      const template = await service.getTemplateById(req.params.id);
+      return sendSuccess(res, template);
+    } catch (error: any) {
+      return sendError(res, error.message, error.statusCode || 500);
+    }
+  }
+
   async createTemplate(req: AuthRequest, res: Response) {
     try {
       const template = await service.createTemplate(req.body);
@@ -28,6 +37,15 @@ export class DocumentosController {
     try {
       const template = await service.updateTemplate(req.params.id, req.body);
       return sendSuccess(res, template, 'Modelo actualizado');
+    } catch (error: any) {
+      return sendError(res, error.message, error.statusCode || 500);
+    }
+  }
+
+  async deleteTemplate(req: AuthRequest, res: Response) {
+    try {
+      const result = await service.deleteTemplate(req.params.id);
+      return sendSuccess(res, result, 'Modelo eliminado');
     } catch (error: any) {
       return sendError(res, error.message, error.statusCode || 500);
     }
@@ -79,6 +97,15 @@ export class DocumentosController {
       const fileUrl = `/uploads/${req.file.filename}`;
       const document = await service.uploadDocumentFile(req.params.id, fileUrl);
       return sendSuccess(res, document, 'Ficheiro carregado com sucesso');
+    } catch (error: any) {
+      return sendError(res, error.message, error.statusCode || 500);
+    }
+  }
+
+  async deleteDocument(req: AuthRequest, res: Response) {
+    try {
+      const result = await service.deleteDocument(req.params.id);
+      return sendSuccess(res, result, 'Documento eliminado');
     } catch (error: any) {
       return sendError(res, error.message, error.statusCode || 500);
     }
