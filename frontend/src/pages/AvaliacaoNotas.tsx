@@ -3,6 +3,7 @@ import { useNavigate, useParams } from 'react-router-dom';
 import { ArrowLeft, Save, AlertCircle } from 'lucide-react';
 import avaliacoesService from '../services/avaliacoes.service';
 import type { Assessment, SaveGradeDTO } from '../services/avaliacoes.service';
+import { useAuth } from '../contexts/AuthContext';
 
 interface GradeInput extends SaveGradeDTO {
   first_name?: string;
@@ -14,6 +15,7 @@ interface GradeInput extends SaveGradeDTO {
 export default function AvaliacaoNotas() {
   const navigate = useNavigate();
   const { id } = useParams();
+  const { user } = useAuth();
   
   const [assessment, setAssessment] = useState<Assessment | null>(null);
   const [grades, setGrades] = useState<GradeInput[]>([]);
@@ -35,7 +37,20 @@ export default function AvaliacaoNotas() {
       ]);
       
       setAssessment(assessmentData);
-      setGrades(gradesData.map(g => ({
+      
+      // Filter grades: show all for admin/professor, only own for student
+      let filteredGrades = gradesData;
+      if (user?.role === 'estudante') {
+        // For students, we need to get their student_id from the grades data
+        // The user.id is the user_id, not student_id
+        // We'll filter by matching the user's info with the grade's student info
+        filteredGrades = gradesData.filter(g => 
+          g.first_name === user.first_name && 
+          g.last_name === user.last_name
+        );
+      }
+      
+      setGrades(filteredGrades.map(g => ({
         id: g.id,
         student_id: g.student_id,
         score: g.score,
@@ -139,14 +154,16 @@ export default function AvaliacaoNotas() {
             {assessment.name} - {assessment.class_name} - {assessment.subject_name}
           </p>
         </div>
-        <button
-          onClick={handleSave}
-          disabled={saving}
-          className="inline-flex items-center px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 disabled:opacity-50"
-        >
-          <Save className="h-4 w-4 mr-2" />
-          {saving ? 'A guardar...' : 'Guardar Notas'}
-        </button>
+        {(user?.role === 'admin' || user?.role === 'professor') && (
+          <button
+            onClick={handleSave}
+            disabled={saving}
+            className="inline-flex items-center px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 disabled:opacity-50"
+          >
+            <Save className="h-4 w-4 mr-2" />
+            {saving ? 'A guardar...' : 'Guardar Notas'}
+          </button>
+        )}
       </div>
 
       <div className="bg-white shadow rounded-lg">
@@ -160,10 +177,12 @@ export default function AvaliacaoNotas() {
               <p className="text-sm font-medium text-green-900">Nota Máxima</p>
               <p className="mt-1 text-lg font-semibold text-green-600">{assessment.max_score || 20}</p>
             </div>
-            <div className="bg-purple-50 p-4 rounded-lg">
-              <p className="text-sm font-medium text-purple-900">Média da Turma</p>
-              <p className="mt-1 text-lg font-semibold text-purple-600">{calculateAverage()}</p>
-            </div>
+            {(user?.role === 'admin' || user?.role === 'professor') && (
+              <div className="bg-purple-50 p-4 rounded-lg">
+                <p className="text-sm font-medium text-purple-900">Média da Turma</p>
+                <p className="mt-1 text-lg font-semibold text-purple-600">{calculateAverage()}</p>
+              </div>
+            )}
           </div>
 
           {grades.length === 0 ? (
@@ -215,9 +234,11 @@ export default function AvaliacaoNotas() {
                           step="0.5"
                           value={grade.score || ''}
                           onChange={(e) => handleScoreChange(grade.student_id, e.target.value)}
+                          readOnly={user?.role === 'estudante'}
+                          disabled={user?.role === 'estudante'}
                           className={`w-20 rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm ${
                             grade.score !== undefined ? getGradeColor(grade.score, assessment.max_score) : ''
-                          }`}
+                          } ${user?.role === 'estudante' ? 'bg-gray-100 cursor-not-allowed' : ''}`}
                           placeholder="0.0"
                         />
                         <span className="ml-2 text-sm text-gray-500">
@@ -229,7 +250,11 @@ export default function AvaliacaoNotas() {
                           type="text"
                           value={grade.remarks || ''}
                           onChange={(e) => handleRemarksChange(grade.student_id, e.target.value)}
-                          className="w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm"
+                          readOnly={user?.role === 'estudante'}
+                          disabled={user?.role === 'estudante'}
+                          className={`w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm ${
+                            user?.role === 'estudante' ? 'bg-gray-100 cursor-not-allowed' : ''
+                          }`}
                           placeholder="Observações opcionais"
                         />
                       </td>
@@ -242,19 +267,21 @@ export default function AvaliacaoNotas() {
         </div>
       </div>
 
-      <div className="bg-yellow-50 border-l-4 border-yellow-400 p-4">
-        <div className="flex">
-          <div className="flex-shrink-0">
-            <AlertCircle className="h-5 w-5 text-yellow-400" />
-          </div>
-          <div className="ml-3">
-            <p className="text-sm text-yellow-700">
-              <strong>Dica:</strong> As notas são guardadas automaticamente quando clica em "Guardar Notas". 
-              Pode editar as notas a qualquer momento.
-            </p>
+      {(user?.role === 'admin' || user?.role === 'professor') && (
+        <div className="bg-yellow-50 border-l-4 border-yellow-400 p-4">
+          <div className="flex">
+            <div className="flex-shrink-0">
+              <AlertCircle className="h-5 w-5 text-yellow-400" />
+            </div>
+            <div className="ml-3">
+              <p className="text-sm text-yellow-700">
+                <strong>Dica:</strong> As notas são guardadas automaticamente quando clica em "Guardar Notas". 
+                Pode editar as notas a qualquer momento.
+              </p>
+            </div>
           </div>
         </div>
-      </div>
+      )}
     </div>
   );
 }

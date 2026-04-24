@@ -1,11 +1,14 @@
 import { useState, useEffect } from 'react';
 import { useNavigate, useParams, Link } from 'react-router-dom';
 import subjectsService from '../services/subjects.service';
+import { useAuth } from '../contexts/AuthContext';
 
 export default function SubjectForm() {
   const navigate = useNavigate();
   const { id } = useParams();
+  const { user } = useAuth();
   const isEditing = !!id;
+  const canEdit = user?.role === 'admin';
 
   const [formData, setFormData] = useState({
     name: '',
@@ -86,7 +89,7 @@ export default function SubjectForm() {
 
       <div className="bg-white rounded-lg shadow p-6">
         <h1 className="text-2xl font-bold text-gray-900 mb-6">
-          {isEditing ? 'Editar Disciplina' : 'Nova Disciplina'}
+          {isEditing ? (canEdit ? 'Editar Disciplina' : 'Visualizar Disciplina') : 'Nova Disciplina'}
         </h1>
 
         <form onSubmit={handleSubmit} className="space-y-4">
@@ -100,7 +103,9 @@ export default function SubjectForm() {
               value={formData.name}
               onChange={handleChange}
               required
-              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+              readOnly={!canEdit && isEditing}
+              disabled={!canEdit && isEditing}
+              className={`w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 ${!canEdit && isEditing ? 'bg-gray-100 cursor-not-allowed' : ''}`}
               placeholder="Ex: Matemática"
             />
           </div>
@@ -115,7 +120,9 @@ export default function SubjectForm() {
               value={formData.code}
               onChange={handleChange}
               required
-              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+              readOnly={!canEdit && isEditing}
+              disabled={!canEdit && isEditing}
+              className={`w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 ${!canEdit && isEditing ? 'bg-gray-100 cursor-not-allowed' : ''}`}
               placeholder="Ex: MAT-001"
             />
           </div>
@@ -129,7 +136,9 @@ export default function SubjectForm() {
               value={formData.description}
               onChange={handleChange}
               rows={3}
-              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+              readOnly={!canEdit && isEditing}
+              disabled={!canEdit && isEditing}
+              className={`w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 ${!canEdit && isEditing ? 'bg-gray-100 cursor-not-allowed' : ''}`}
               placeholder="Descrição da disciplina..."
             />
           </div>
@@ -147,7 +156,9 @@ export default function SubjectForm() {
                 min="1"
                 max="10"
                 required
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                readOnly={!canEdit && isEditing}
+                disabled={!canEdit && isEditing}
+                className={`w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 ${!canEdit && isEditing ? 'bg-gray-100 cursor-not-allowed' : ''}`}
               />
             </div>
 
@@ -160,7 +171,8 @@ export default function SubjectForm() {
                 value={formData.year_level}
                 onChange={handleChange}
                 required
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                disabled={!canEdit && isEditing}
+                className={`w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 ${!canEdit && isEditing ? 'bg-gray-100 cursor-not-allowed' : ''}`}
               >
                 {[1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12].map((year) => (
                   <option key={year} value={year}>
@@ -171,22 +183,35 @@ export default function SubjectForm() {
             </div>
           </div>
 
-          <div className="flex gap-3 pt-4">
-            <button
-              type="submit"
-              disabled={saving}
-              className="flex-1 bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg font-medium transition-colors disabled:opacity-50"
-            >
-              {saving ? 'A salvar...' : 'Salvar'}
-            </button>
-            <button
-              type="button"
-              onClick={() => navigate('/subjects')}
-              className="px-4 py-2 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50 transition-colors"
-            >
-              Cancelar
-            </button>
-          </div>
+          {canEdit && (
+            <div className="flex gap-3 pt-4">
+              <button
+                type="submit"
+                disabled={saving}
+                className="flex-1 bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg font-medium transition-colors disabled:opacity-50"
+              >
+                {saving ? 'A salvar...' : 'Salvar'}
+              </button>
+              <button
+                type="button"
+                onClick={() => navigate('/subjects')}
+                className="px-4 py-2 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50 transition-colors"
+              >
+                Cancelar
+              </button>
+            </div>
+          )}
+          {!canEdit && isEditing && (
+            <div className="flex gap-3 pt-4">
+              <button
+                type="button"
+                onClick={() => navigate('/subjects')}
+                className="w-full px-4 py-2 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50 transition-colors"
+              >
+                Voltar
+              </button>
+            </div>
+          )}
         </form>
       </div>
     </div>

@@ -75,14 +75,38 @@ export class AvaliacoesService {
   }
 
   async listGrades(assessmentId: string) {
-    const grades = await db('grades as g')
-      .join('students as s', 's.id', 'g.student_id')
+    const assessment = await db('assessments as a')
+      .select('a.class_id', 'a.academic_year_id')
+      .where('a.id', assessmentId)
+      .first();
+
+    if (!assessment) throw new AppError('Avaliação não encontrada', 404);
+
+    const students = await db('enrollments as e')
+      .join('students as s', 's.id', 'e.student_id')
       .join('users as u', 'u.id', 's.user_id')
-      .select('g.*', 'u.first_name', 'u.last_name', 's.student_number')
-      .where('g.assessment_id', assessmentId)
+      .leftJoin('grades as g', function() {
+        this.on('g.student_id', 's.id')
+          .andOn('g.assessment_id', db.raw('?', [assessmentId]));
+      })
+      .select(
+        's.id as student_id',
+        'u.first_name',
+        'u.last_name',
+        's.student_number',
+        'g.id',
+        'g.assessment_id',
+        'g.score',
+        'g.remarks',
+        'g.created_at',
+        'g.updated_at'
+      )
+      .where('e.class_id', assessment.class_id)
+      .where('e.academic_year_id', assessment.academic_year_id)
+      .where('e.status', 'active')
       .orderBy('u.last_name');
 
-    return grades;
+    return students;
   }
 
   async saveGrades(assessmentId: string, grades: SaveGradeDTO[]) {

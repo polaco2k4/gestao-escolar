@@ -274,7 +274,13 @@ export default function Avaliacoes() {
                           </button>
                         )}
                         {user?.role === 'estudante' && (
-                          <span className="text-sm text-gray-500">Visualização</span>
+                          <Link
+                            to={`/avaliacoes/${assessment.id}/notas`}
+                            className="inline-flex items-center text-green-600 hover:text-green-900"
+                            title="Visualizar Notas"
+                          >
+                            <FileText className="h-4 w-4" />
+                          </Link>
                         )}
                       </td>
                     </tr>
