@@ -19,7 +19,9 @@ export class FinanceiroController {
 
   async createFeeType(req: AuthRequest, res: Response) {
     try {
-      const feeType = await service.createFeeType(req.body);
+      const school = await db('schools').first();
+      const school_id = req.user?.school_id || school?.id;
+      const feeType = await service.createFeeType({ ...req.body, school_id });
       return sendSuccess(res, feeType, 'Tipo de propina criado', 201);
     } catch (error: any) {
       return sendError(res, error.message, error.statusCode || 500);
@@ -30,6 +32,15 @@ export class FinanceiroController {
     try {
       const feeType = await service.updateFeeType(req.params.id, req.body);
       return sendSuccess(res, feeType, 'Tipo de propina actualizado');
+    } catch (error: any) {
+      return sendError(res, error.message, error.statusCode || 500);
+    }
+  }
+
+  async deleteFeeType(req: AuthRequest, res: Response) {
+    try {
+      await service.deleteFeeType(req.params.id);
+      return sendSuccess(res, null, 'Tipo de propina eliminado');
     } catch (error: any) {
       return sendError(res, error.message, error.statusCode || 500);
     }
@@ -67,9 +78,11 @@ export class FinanceiroController {
 
   async createStudentFee(req: AuthRequest, res: Response) {
     try {
+      logger.info('Creating student fee with data:', req.body);
       const fee = await service.createStudentFee(req.body);
       return sendSuccess(res, fee, 'Propina atribuída', 201);
     } catch (error: any) {
+      logger.error('Error creating student fee:', error);
       return sendError(res, error.message, error.statusCode || 500);
     }
   }

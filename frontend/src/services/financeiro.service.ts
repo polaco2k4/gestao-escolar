@@ -61,6 +61,10 @@ class FinanceiroService {
     return response.data.data;
   }
 
+  async deleteFeeType(id: string): Promise<void> {
+    await api.delete(`/api/financeiro/fee-types/${id}`);
+  }
+
   async listStudentFees(filters?: { student_id?: string; status?: string }): Promise<StudentFee[]> {
     const response = await api.get('/api/financeiro/student-fees', { params: filters });
     const data = response.data.data;

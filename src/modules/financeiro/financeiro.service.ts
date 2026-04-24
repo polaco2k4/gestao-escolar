@@ -21,6 +21,11 @@ export class FinanceiroService {
     return updated;
   }
 
+  async deleteFeeType(id: string) {
+    const deleted = await db('fee_types').where({ id }).delete();
+    if (!deleted) throw new AppError('Tipo de propina não encontrado', 404);
+  }
+
   // --- Student Fees ---
   async listStudentFees(page = 1, limit = 20, filters: any = {}, guardianId?: string) {
     const { offset } = paginate(page, limit);
@@ -28,7 +33,7 @@ export class FinanceiroService {
       .join('students as s', 's.id', 'sf.student_id')
       .join('users as u', 'u.id', 's.user_id')
       .join('fee_types as ft', 'ft.id', 'sf.fee_type_id')
-      .select('sf.*', 'u.first_name', 'u.last_name', 's.student_number', 'ft.name as fee_type_name');
+      .select('sf.*', 'u.first_name as student_first_name', 'u.last_name as student_last_name', 's.student_number', 'ft.name as fee_type_name');
 
     if (filters.status) query.where('sf.status', filters.status);
     if (filters.academic_year_id) query.where('sf.academic_year_id', filters.academic_year_id);
@@ -55,8 +60,35 @@ export class FinanceiroService {
   }
 
   async createStudentFee(data: any) {
+    // If academic_year_id is not provided, fetch the current academic year
+    if (!data.academic_year_id) {
+      const currentAcademicYear = await db('academic_years')
+        .where('is_current', true)
+        .first();
+      
+      if (!currentAcademicYear) {
+        throw new AppError('Nenhum ano lectivo activo encontrado. Por favor, defina um ano lectivo como activo antes de criar propinas.', 400);
+      }
+      
+      data.academic_year_id = currentAcademicYear.id;
+    }
+
+    // If student_id looks like a student number (not a UUID), look up the actual student UUID
+    let studentId = data.student_id;
+    if (studentId && !studentId.match(/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i)) {
+      const student = await db('students').where('student_number', studentId).first();
+      if (!student) {
+        throw new AppError('Estudante não encontrado com o número: ' + studentId, 404);
+      }
+      studentId = student.id;
+    }
+
     const [fee] = await db('student_fees').insert({
-      ...data,
+      student_id: studentId,
+      fee_type_id: data.fee_type_id,
+      academic_year_id: data.academic_year_id,
+      amount: data.amount,
+      due_date: data.due_date,
       status: data.status || 'pending',
     }).returning('*');
     return fee;
@@ -90,7 +122,7 @@ export class FinanceiroService {
       .join('students as s', 's.id', 'sf.student_id')
       .join('users as u', 'u.id', 's.user_id')
       .join('fee_types as ft', 'ft.id', 'sf.fee_type_id')
-      .select('p.*', 'u.first_name', 'u.last_name', 'ft.name as fee_name');
+      .select('p.*', 'u.first_name as student_first_name', 'u.last_name as student_last_name', 'ft.name as fee_name');
 
     if (filters.student_id) query.where('p.student_id', filters.student_id);
     if (filters.school_id) query.where('p.school_id', filters.school_id);
@@ -125,9 +157,25 @@ export class FinanceiroService {
 
   async createPayment(data: any) {
     return db.transaction(async (trx: any) => {
-      const [payment] = await trx('payments').insert(data).returning('*');
+      const studentFee = await trx('student_fees as sf')
+        .join('students as s', 's.id', 'sf.student_id')
+        .where('sf.id', data.student_fee_id)
+        .select('sf.*', 's.school_id')
+        .first();
 
-      const studentFee = await trx('student_fees').where({ id: data.student_fee_id }).first();
+      if (!studentFee) throw new AppError('Propina não encontrada', 404);
+
+      const [payment] = await trx('payments').insert({
+        student_fee_id: data.student_fee_id,
+        student_id: studentFee.student_id,
+        school_id: studentFee.school_id,
+        amount: data.amount,
+        payment_date: data.payment_date || new Date(),
+        payment_method: data.payment_method || 'cash',
+        notes: data.notes || null,
+        created_by: data.created_by || null,
+      }).returning('*');
+
       const totalPaid = await trx('payments')
         .where({ student_fee_id: data.student_fee_id })
         .sum('amount as total');

@@ -1,0 +1,12 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(npm run *)",
+      "Bash(netstat -ano)",
+      "Bash(findstr \":5000\")",
+      "Bash(findstr \"LISTENING\")",
+      "Bash(taskkill /PID 6504 /F)",
+      "PowerShell(Stop-Process -Id 6504 -Force)"
+    ]
+  }
+}
