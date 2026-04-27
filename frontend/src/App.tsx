@@ -59,9 +59,9 @@ function App() {
             <Route path="matriculas/:id" element={<MatriculaDetail />} />
             <Route path="matriculas/:id/editar" element={<MatriculaForm />} />
             <Route path="estudantes" element={<Estudantes />} />
-            <Route path="estudantes/novo" element={<EstudanteForm />} />
+            <Route path="estudantes/novo" element={<RoleProtectedRoute allowedRoles={['admin', 'gestor']}><EstudanteForm /></RoleProtectedRoute>} />
             <Route path="estudantes/:id" element={<EstudanteDetail />} />
-            <Route path="estudantes/:id/editar" element={<EstudanteForm />} />
+            <Route path="estudantes/:id/editar" element={<RoleProtectedRoute allowedRoles={['admin', 'gestor']}><EstudanteForm /></RoleProtectedRoute>} />
             <Route path="escolas" element={<RoleProtectedRoute allowedRoles={['admin']}><Escolas /></RoleProtectedRoute>} />
             <Route path="escolas/novo" element={<RoleProtectedRoute allowedRoles={['admin']}><EscolaForm /></RoleProtectedRoute>} />
             <Route path="escolas/:id/editar" element={<RoleProtectedRoute allowedRoles={['admin']}><EscolaForm /></RoleProtectedRoute>} />

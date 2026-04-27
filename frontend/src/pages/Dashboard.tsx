@@ -27,7 +27,15 @@ export default function Dashboard() {
           Bem-vindo, {user?.first_name}!
         </h1>
         <p className="text-gray-600 mt-2">
-          Aqui está um resumo do sistema de gestão escolar
+          {user?.school_name ? (
+            <>
+              <span className="font-semibold text-blue-600">{user.school_name}</span>
+              {' • '}
+              Aqui está um resumo do sistema de gestão escolar
+            </>
+          ) : (
+            'Aqui está um resumo do sistema de gestão escolar'
+          )}
         </p>
       </div>
 

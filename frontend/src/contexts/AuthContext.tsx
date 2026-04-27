@@ -9,6 +9,7 @@ interface User {
   last_name: string;
   role: string;
   school_id?: string;
+  school_name?: string;
 }
 
 interface AuthContextType {

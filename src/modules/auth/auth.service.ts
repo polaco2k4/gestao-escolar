@@ -19,6 +19,15 @@ export class AuthService {
       throw new AppError('Email já registado', 409);
     }
 
+    // Garantir que o usuário tenha uma escola
+    let finalSchoolId = data.school_id;
+    if (!finalSchoolId) {
+      const firstSchool = await db('schools').select('id').first();
+      if (firstSchool) {
+        finalSchoolId = firstSchool.id;
+      }
+    }
+
     const password_hash = await bcrypt.hash(data.password, 12);
 
     const [user] = await db('users')
@@ -29,7 +38,7 @@ export class AuthService {
         last_name: data.last_name,
         role: data.role,
         phone: data.phone,
-        school_id: data.school_id,
+        school_id: finalSchoolId,
       })
       .returning(['id', 'email', 'first_name', 'last_name', 'role', 'school_id']);
 
@@ -39,7 +48,15 @@ export class AuthService {
   }
 
   async login(email: string, password: string) {
-    const user = await db('users').where({ email, active: true }).first();
+    const user = await db('users as u')
+      .leftJoin('schools as s', 's.id', 'u.school_id')
+      .where({ 'u.email': email, 'u.active': true })
+      .select(
+        'u.*',
+        's.name as school_name'
+      )
+      .first();
+      
     if (!user) {
       throw new AppError('Credenciais inválidas', 401);
     }
@@ -83,9 +100,21 @@ export class AuthService {
   }
 
   async getProfile(userId: string) {
-    const user = await db('users')
-      .where({ id: userId })
-      .select('id', 'email', 'first_name', 'last_name', 'role', 'phone', 'avatar_url', 'school_id', 'created_at')
+    const user = await db('users as u')
+      .leftJoin('schools as s', 's.id', 'u.school_id')
+      .where({ 'u.id': userId })
+      .select(
+        'u.id', 
+        'u.email', 
+        'u.first_name', 
+        'u.last_name', 
+        'u.role', 
+        'u.phone', 
+        'u.avatar_url', 
+        'u.school_id', 
+        's.name as school_name',
+        'u.created_at'
+      )
       .first();
 
     if (!user) {

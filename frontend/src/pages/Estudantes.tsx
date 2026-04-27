@@ -1,9 +1,11 @@
 import { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
+import { useAuth } from '../contexts/AuthContext';
 import studentsService from '../services/students.service';
 import type { Student, StudentFilters } from '../services/students.service';
 
 export default function Estudantes() {
+  const { user } = useAuth();
   const [students, setStudents] = useState<Student[]>([]);
   const [loading, setLoading] = useState(true);
   const [filters, setFilters] = useState<StudentFilters>({
@@ -86,12 +88,14 @@ export default function Estudantes() {
     <div className="space-y-6">
       <div className="flex justify-between items-center">
         <h1 className="text-3xl font-bold text-gray-900">Estudantes</h1>
-        <Link
-          to="/estudantes/novo"
-          className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg font-medium transition-colors"
-        >
-          + Novo Estudante
-        </Link>
+        {user?.role !== 'professor' && (
+          <Link
+            to="/estudantes/novo"
+            className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg font-medium transition-colors"
+          >
+            + Novo Estudante
+          </Link>
+        )}
       </div>
 
       <div className="bg-white rounded-lg shadow p-6">
@@ -191,18 +195,22 @@ export default function Estudantes() {
                         >
                           Ver
                         </Link>
-                        <Link
-                          to={`/estudantes/${student.id}/editar`}
-                          className="text-indigo-600 hover:text-indigo-900"
-                        >
-                          Editar
-                        </Link>
-                        <button
-                          onClick={() => handleDelete(student.id)}
-                          className="text-red-600 hover:text-red-900"
-                        >
-                          Eliminar
-                        </button>
+                        {user?.role !== 'professor' && (
+                          <>
+                            <Link
+                              to={`/estudantes/${student.id}/editar`}
+                              className="text-indigo-600 hover:text-indigo-900"
+                            >
+                              Editar
+                            </Link>
+                            <button
+                              onClick={() => handleDelete(student.id)}
+                              className="text-red-600 hover:text-red-900"
+                            >
+                              Eliminar
+                            </button>
+                          </>
+                        )}
                       </td>
                     </tr>
                   ))}

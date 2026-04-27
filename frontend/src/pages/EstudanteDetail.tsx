@@ -1,9 +1,11 @@
 import { useState, useEffect } from 'react';
 import { useParams, useNavigate, Link } from 'react-router-dom';
+import { useAuth } from '../contexts/AuthContext';
 import studentsService from '../services/students.service';
 import type { Student } from '../services/students.service';
 
 export default function EstudanteDetail() {
+  const { user } = useAuth();
   const { id } = useParams();
   const navigate = useNavigate();
   const [student, setStudent] = useState<Student | null>(null);
@@ -84,20 +86,22 @@ export default function EstudanteDetail() {
           <h1 className="text-3xl font-bold text-gray-900">Detalhes do Estudante</h1>
           <p className="text-gray-600 mt-2">Informações completas do estudante</p>
         </div>
-        <div className="flex space-x-3">
-          <Link
-            to={`/estudantes/${id}/editar`}
-            className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg font-medium transition-colors"
-          >
-            Editar
-          </Link>
-          <button
-            onClick={handleDelete}
-            className="px-4 py-2 bg-red-600 hover:bg-red-700 text-white rounded-lg font-medium transition-colors"
-          >
-            Eliminar
-          </button>
-        </div>
+        {user?.role !== 'professor' && (
+          <div className="flex space-x-3">
+            <Link
+              to={`/estudantes/${id}/editar`}
+              className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg font-medium transition-colors"
+            >
+              Editar
+            </Link>
+            <button
+              onClick={handleDelete}
+              className="px-4 py-2 bg-red-600 hover:bg-red-700 text-white rounded-lg font-medium transition-colors"
+            >
+              Eliminar
+            </button>
+          </div>
+        )}
       </div>
 
       <div className="bg-white rounded-lg shadow overflow-hidden">
