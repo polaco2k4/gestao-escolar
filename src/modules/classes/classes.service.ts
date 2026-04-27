@@ -1,12 +1,18 @@
 import db from '../../config/database';
 import { AppError } from '../../middleware/errorHandler';
+import { applySchoolFilter, canAccessSchool } from '../../middleware/schoolSegregation';
+import { AuthPayload } from '../../middleware/auth';
 
 export class ClassesService {
-  async list() {
-    const classes = await db('classes as c')
+  async list(user?: AuthPayload) {
+    let query = db('classes as c')
       .join('courses as co', 'co.id', 'c.course_id')
-      .join('academic_years as ay', 'ay.id', 'c.academic_year_id')
-      .select(
+      .join('academic_years as ay', 'ay.id', 'c.academic_year_id');
+    
+    // Aplicar filtro de escola (usando alias 'c' para classes)
+    query = applySchoolFilter(query, user, 'c');
+    
+    const classes = await query.select(
         'c.id',
         'c.name',
         'c.year_level',
@@ -22,7 +28,7 @@ export class ClassesService {
     return { classes };
   }
 
-  async getById(id: string) {
+  async getById(id: string, user?: AuthPayload) {
     const classData = await db('classes as c')
       .join('courses as co', 'co.id', 'c.course_id')
       .join('academic_years as ay', 'ay.id', 'c.academic_year_id')
@@ -31,11 +37,17 @@ export class ClassesService {
       .first();
 
     if (!classData) throw new AppError('Turma não encontrada', 404);
+    
+    // Validar acesso à escola
+    if (user && !canAccessSchool(user, classData.school_id)) {
+      throw new AppError('Sem permissão para acessar esta turma', 403);
+    }
+    
     return classData;
   }
 
   async create(data: {
-    school_id: string;
+    school_id?: string;
     academic_year_id: string;
     course_id: string;
     name: string;
@@ -43,7 +55,13 @@ export class ClassesService {
     section?: string;
     max_students?: number;
     class_director_id?: string;
-  }) {
+  }, user?: AuthPayload) {
+    // Admin pode escolher escola, outros usam sua própria escola
+    const schoolId = user?.role === 'admin' ? data.school_id : user?.school_id;
+    
+    if (!schoolId) {
+      throw new AppError('Escola não especificada', 400);
+    }
     const course = await db('courses').where('id', data.course_id).first();
     if (!course) throw new AppError('Curso não encontrado', 404);
 
@@ -53,6 +71,7 @@ export class ClassesService {
     const [classData] = await db('classes')
       .insert({
         ...data,
+        school_id: schoolId,
         created_at: new Date(),
         updated_at: new Date()
       })

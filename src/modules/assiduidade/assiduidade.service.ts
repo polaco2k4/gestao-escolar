@@ -1,16 +1,22 @@
 import db from '../../config/database';
 import { AppError } from '../../middleware/errorHandler';
 import { paginate, buildPaginationMeta } from '../../utils/helpers';
+import { applySchoolFilter, canAccessSchool } from '../../middleware/schoolSegregation';
+import { AuthPayload } from '../../middleware/auth';
 
 export class AssiduidadeService {
-  async list(page = 1, limit = 20, filters: any = {}) {
+  async list(page = 1, limit = 20, filters: any = {}, user?: AuthPayload) {
     const { offset } = paginate(page, limit);
-    const query = db('attendance_records as ar')
+    let query = db('attendance_records as ar')
       .join('students as s', 's.id', 'ar.student_id')
       .join('users as u', 'u.id', 's.user_id')
       .join('schedules as sch', 'sch.id', 'ar.schedule_id')
-      .join('subjects as sub', 'sub.id', 'sch.subject_id')
-      .select('ar.*', 'u.first_name', 'u.last_name', 's.student_number', 'sub.name as subject_name');
+      .join('subjects as sub', 'sub.id', 'sch.subject_id');
+    
+    // Aplicar filtro de escola (usando alias 'ar' para attendance_records)
+    query = applySchoolFilter(query, user, 'ar');
+    
+    query = query.select('ar.*', 'u.first_name', 'u.last_name', 's.student_number', 'sub.name as subject_name');
 
     if (filters.class_id) {
       query.join('classes as c', 'c.id', 'sch.class_id').where('sch.class_id', filters.class_id);
@@ -19,12 +25,14 @@ export class AssiduidadeService {
     if (filters.status) query.where('ar.status', filters.status);
     if (filters.student_id) query.where('ar.student_id', filters.student_id);
 
-    const [{ count }] = await db('attendance_records').count('id as count');
+    let countQuery = db('attendance_records as ar');
+    countQuery = applySchoolFilter(countQuery, user, 'ar');
+    const [{ count }] = await countQuery.count('ar.id as count');
     const records = await query.orderBy('ar.date', 'desc').limit(limit).offset(offset);
     return { records, meta: buildPaginationMeta(Number(count), page, limit) };
   }
 
-  async getById(id: string) {
+  async getById(id: string, user?: AuthPayload) {
     const record = await db('attendance_records as ar')
       .join('students as s', 's.id', 'ar.student_id')
       .join('users as u', 'u.id', 's.user_id')
@@ -35,6 +43,12 @@ export class AssiduidadeService {
       .where('ar.id', id)
       .first();
     if (!record) throw new AppError('Registo de presença não encontrado', 404);
+    
+    // Validar acesso à escola
+    if (user && !canAccessSchool(user, record.school_id)) {
+      throw new AppError('Sem permissão para acessar este registo', 403);
+    }
+    
     return record;
   }
 
@@ -63,8 +77,12 @@ export class AssiduidadeService {
       .orderBy('u.last_name');
   }
 
-  async record(data: any) {
-    const [record] = await db('attendance_records').insert(data).returning('*');
+  async record(data: any, user?: AuthPayload) {
+    // Admin pode escolher escola, outros usam sua própria escola
+    const schoolId = user?.role === 'admin' ? data.school_id : user?.school_id;
+    if (!schoolId) throw new AppError('Escola não especificada', 400);
+    
+    const [record] = await db('attendance_records').insert({ ...data, school_id: schoolId }).returning('*');
     return record;
   }
 
@@ -91,13 +109,19 @@ export class AssiduidadeService {
     });
   }
 
-  async update(id: string, data: any) {
+  async update(id: string, data: any, user?: AuthPayload) {
+    // Validar acesso primeiro
+    await this.getById(id, user);
+    
     const [updated] = await db('attendance_records').where({ id }).update({ ...data, updated_at: new Date() }).returning('*');
     if (!updated) throw new AppError('Registo de presença não encontrado', 404);
     return updated;
   }
 
-  async delete(id: string) {
+  async delete(id: string, user?: AuthPayload) {
+    // Validar acesso primeiro
+    await this.getById(id, user);
+    
     const deleted = await db('attendance_records').where({ id }).delete();
     if (!deleted) throw new AppError('Registo de presença não encontrado', 404);
     return { message: 'Registo de presença eliminado com sucesso' };

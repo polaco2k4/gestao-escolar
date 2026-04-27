@@ -53,7 +53,7 @@ export default function Financeiro() {
       ]);
       
       // Only load summary for admin
-      if (user?.role === 'admin') {
+      if (user?.role === 'admin' || user?.role === 'gestor') {
         const summaryData = await financeiroService.getFinancialSummary({});
         setSummary(summaryData);
       }
@@ -260,7 +260,7 @@ export default function Financeiro() {
             Visão geral das finanças da escola
           </p>
         </div>
-        {user?.role === 'admin' && (
+        {(user?.role === 'admin' || user?.role === 'gestor') && (
           <div className="flex space-x-3">
             <button onClick={handleOpenPaymentModal} className="inline-flex items-center px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-green-600 hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500">
               <Receipt className="h-5 w-5 mr-2" />
@@ -503,9 +503,11 @@ export default function Financeiro() {
                 <input
                   type="number"
                   required
-                  value={paymentForm.amount}
-                  onChange={(e) => setPaymentForm({ ...paymentForm, amount: Number(e.target.value) })}
+                  value={paymentForm.amount || ''}
+                  onChange={(e) => setPaymentForm({ ...paymentForm, amount: e.target.value ? Number(e.target.value) : 0 })}
                   className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500"
+                  min="0"
+                  step="0.01"
                 />
               </div>
               <div>
@@ -631,9 +633,11 @@ export default function Financeiro() {
                 <input
                   type="number"
                   required
-                  value={feeForm.amount}
-                  onChange={(e) => setFeeForm({ ...feeForm, amount: Number(e.target.value) })}
+                  value={feeForm.amount || ''}
+                  onChange={(e) => setFeeForm({ ...feeForm, amount: e.target.value ? Number(e.target.value) : 0 })}
                   className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500"
+                  min="0"
+                  step="0.01"
                 />
               </div>
               <div>
@@ -749,8 +753,9 @@ export default function Financeiro() {
                       type="number"
                       required
                       min={0}
-                      value={feeTypeForm.amount}
-                      onChange={(e) => setFeeTypeForm({ ...feeTypeForm, amount: Number(e.target.value) })}
+                      step="0.01"
+                      value={feeTypeForm.amount || ''}
+                      onChange={(e) => setFeeTypeForm({ ...feeTypeForm, amount: e.target.value ? Number(e.target.value) : 0 })}
                       className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 text-sm"
                     />
                   </div>

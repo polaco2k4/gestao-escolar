@@ -1,13 +1,19 @@
 import db from '../../config/database';
 import { AppError } from '../../middleware/errorHandler';
+import { applySchoolFilter, canAccessSchool } from '../../middleware/schoolSegregation';
+import { AuthPayload } from '../../middleware/auth';
 import bcrypt from 'bcryptjs';
 
 export class GuardiansService {
-  async list() {
-    const guardians = await db('guardians as g')
+  async list(user?: AuthPayload) {
+    let query = db('guardians as g')
       .join('users as u', 'u.id', 'g.user_id')
-      .join('schools as s', 's.id', 'g.school_id')
-      .select(
+      .join('schools as s', 's.id', 'g.school_id');
+    
+    // Aplicar filtro de escola (usando alias 'g' para guardians)
+    query = applySchoolFilter(query, user, 'g');
+    
+    const guardians = await query.select(
         'g.*',
         'u.first_name',
         'u.last_name',
@@ -20,7 +26,7 @@ export class GuardiansService {
     return guardians;
   }
 
-  async getById(id: string) {
+  async getById(id: string, user?: AuthPayload) {
     const guardian = await db('guardians as g')
       .join('users as u', 'u.id', 'g.user_id')
       .join('schools as s', 's.id', 'g.school_id')
@@ -37,15 +43,21 @@ export class GuardiansService {
       .first();
 
     if (!guardian) throw new AppError('Encarregado não encontrado', 404);
+    
+    // Validar acesso à escola
+    if (user && !canAccessSchool(user, guardian.school_id)) {
+      throw new AppError('Sem permissão para acessar este encarregado', 403);
+    }
+    
     return guardian;
   }
 
-  async create(data: any, school_id?: string) {
+  async create(data: any, authUser?: AuthPayload) {
     const trx = await db.transaction();
     
     try {
-      // Se school_id não foi fornecido, pegar a primeira escola disponível
-      let finalSchoolId = school_id || data.school_id;
+      // Admin pode escolher escola, outros usam sua própria escola
+      let finalSchoolId = authUser?.role === 'admin' ? data.school_id : authUser?.school_id;
       
       if (!finalSchoolId) {
         const firstSchool = await trx('schools').select('id').first();
@@ -108,7 +120,10 @@ export class GuardiansService {
     }
   }
 
-  async update(id: string, data: any) {
+  async update(id: string, data: any, user?: AuthPayload) {
+    // Validar acesso primeiro
+    await this.getById(id, user);
+    
     const [guardian] = await db('guardians')
       .where({ id })
       .update({
@@ -122,7 +137,10 @@ export class GuardiansService {
     return guardian;
   }
 
-  async delete(id: string) {
+  async delete(id: string, user?: AuthPayload) {
+    // Validar acesso primeiro
+    await this.getById(id, user);
+    
     const deleted = await db('guardians')
       .where({ id })
       .del();

@@ -8,7 +8,7 @@ const service = new RelatoriosService();
 export class RelatoriosController {
   async getStudentsReport(req: AuthRequest, res: Response) {
     try {
-      const report = await service.getStudentsReport(req.query);
+      const report = await service.getStudentsReport(req.query, req.user);
       return sendSuccess(res, report);
     } catch (error: any) {
       return sendError(res, error.message, error.statusCode || 500);
@@ -17,7 +17,7 @@ export class RelatoriosController {
 
   async getAttendanceReport(req: AuthRequest, res: Response) {
     try {
-      const report = await service.getAttendanceReport(req.query);
+      const report = await service.getAttendanceReport(req.query, req.user);
       return sendSuccess(res, report);
     } catch (error: any) {
       return sendError(res, error.message, error.statusCode || 500);
@@ -26,7 +26,7 @@ export class RelatoriosController {
 
   async getGradesReport(req: AuthRequest, res: Response) {
     try {
-      const report = await service.getGradesReport(req.query);
+      const report = await service.getGradesReport(req.query, req.user);
       return sendSuccess(res, report);
     } catch (error: any) {
       return sendError(res, error.message, error.statusCode || 500);
@@ -35,7 +35,7 @@ export class RelatoriosController {
 
   async getFinancialReport(req: AuthRequest, res: Response) {
     try {
-      const report = await service.getFinancialReport(req.query);
+      const report = await service.getFinancialReport(req.query, req.user);
       return sendSuccess(res, report);
     } catch (error: any) {
       return sendError(res, error.message, error.statusCode || 500);
@@ -44,7 +44,7 @@ export class RelatoriosController {
 
   async getEnrollmentsReport(req: AuthRequest, res: Response) {
     try {
-      const report = await service.getEnrollmentsReport(req.query);
+      const report = await service.getEnrollmentsReport(req.query, req.user);
       return sendSuccess(res, report);
     } catch (error: any) {
       return sendError(res, error.message, error.statusCode || 500);

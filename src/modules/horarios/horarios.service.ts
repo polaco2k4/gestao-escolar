@@ -1,29 +1,36 @@
 import db from '../../config/database';
 import { AppError } from '../../middleware/errorHandler';
 import { paginate, buildPaginationMeta } from '../../utils/helpers';
+import { applySchoolFilter, canAccessSchool } from '../../middleware/schoolSegregation';
+import { AuthPayload } from '../../middleware/auth';
 
 export class HorariosService {
   // --- Schedules ---
-  async listSchedules(page = 1, limit = 20, filters: any = {}) {
+  async listSchedules(page = 1, limit = 20, filters: any = {}, user?: AuthPayload) {
     const { offset } = paginate(page, limit);
-    const query = db('schedules as s')
+    let query = db('schedules as s')
       .join('classes as c', 'c.id', 's.class_id')
       .join('subjects as sub', 'sub.id', 's.subject_id')
       .join('teachers as t', 't.id', 's.teacher_id')
       .join('users as u', 'u.id', 't.user_id')
-      .leftJoin('rooms as r', 'r.id', 's.room_id')
-      .select('s.*', 'c.name as class_name', 'sub.name as subject_name', 'u.first_name as teacher_first_name', 'u.last_name as teacher_last_name', 'r.name as room_name');
+      .leftJoin('rooms as r', 'r.id', 's.room_id');
+    
+    query = applySchoolFilter(query, user, 's');
+    
+    query = query.select('s.*', 'c.name as class_name', 'sub.name as subject_name', 'u.first_name as teacher_first_name', 'u.last_name as teacher_last_name', 'r.name as room_name');
 
     if (filters.class_id) query.where('s.class_id', filters.class_id);
     if (filters.teacher_id) query.where('s.teacher_id', filters.teacher_id);
     if (filters.day_of_week) query.where('s.day_of_week', filters.day_of_week);
 
-    const [{ count }] = await db('schedules').count('id as count');
+    let countQuery = db('schedules as s');
+    countQuery = applySchoolFilter(countQuery, user, 's');
+    const [{ count }] = await countQuery.count('s.id as count');
     const schedules = await query.orderBy('s.day_of_week').orderBy('s.start_time').limit(limit).offset(offset);
     return { schedules, meta: buildPaginationMeta(Number(count), page, limit) };
   }
 
-  async getScheduleById(id: string) {
+  async getScheduleById(id: string, user?: AuthPayload) {
     const schedule = await db('schedules as s')
       .join('classes as c', 'c.id', 's.class_id')
       .join('subjects as sub', 'sub.id', 's.subject_id')
@@ -34,10 +41,18 @@ export class HorariosService {
       .where('s.id', id)
       .first();
     if (!schedule) throw new AppError('Horário não encontrado', 404);
+    
+    if (user && !canAccessSchool(user, schedule.school_id)) {
+      throw new AppError('Sem permissão', 403);
+    }
+    
     return schedule;
   }
 
-  async createSchedule(data: any) {
+  async createSchedule(data: any, user?: AuthPayload) {
+    const schoolId = user?.role === 'admin' ? data.school_id : user?.school_id;
+    if (!schoolId) throw new AppError('Escola não especificada', 400);
+    
     if (data.room_id) {
       const conflict = await db('schedules')
         .where({ room_id: data.room_id, day_of_week: data.day_of_week })
@@ -47,17 +62,21 @@ export class HorariosService {
       if (conflict) throw new AppError('Conflito de horário na sala indicada', 409);
     }
 
-    const [schedule] = await db('schedules').insert(data).returning('*');
+    const [schedule] = await db('schedules').insert({ ...data, school_id: schoolId }).returning('*');
     return schedule;
   }
 
-  async updateSchedule(id: string, data: any) {
+  async updateSchedule(id: string, data: any, user?: AuthPayload) {
+    await this.getScheduleById(id, user);
+    
     const [updated] = await db('schedules').where({ id }).update({ ...data, updated_at: new Date() }).returning('*');
     if (!updated) throw new AppError('Horário não encontrado', 404);
     return updated;
   }
 
-  async deleteSchedule(id: string) {
+  async deleteSchedule(id: string, user?: AuthPayload) {
+    await this.getScheduleById(id, user);
+    
     const deleted = await db('schedules').where({ id }).delete();
     if (!deleted) throw new AppError('Horário não encontrado', 404);
   }
@@ -150,25 +169,42 @@ export class HorariosService {
   }
 
   // --- Rooms ---
-  async listRooms(filters: any = {}) {
-    const query = db('rooms');
-    if (filters.school_id) query.where('school_id', filters.school_id);
+  async listRooms(filters: any = {}, user?: AuthPayload) {
+    let query = db('rooms');
+    query = applySchoolFilter(query, user);
     if (filters.active !== undefined) query.where('active', filters.active);
     return query.orderBy('name');
   }
 
-  async createRoom(data: any) {
-    const [room] = await db('rooms').insert(data).returning('*');
+  async createRoom(data: any, user?: AuthPayload) {
+    const schoolId = user?.role === 'admin' ? data.school_id : user?.school_id;
+    if (!schoolId) throw new AppError('Escola não especificada', 400);
+    
+    const [room] = await db('rooms').insert({ ...data, school_id: schoolId }).returning('*');
     return room;
   }
 
-  async updateRoom(id: string, data: any) {
+  async updateRoom(id: string, data: any, user?: AuthPayload) {
+    const existing = await db('rooms').where({ id }).first();
+    if (!existing) throw new AppError('Sala não encontrada', 404);
+    
+    if (user && !canAccessSchool(user, existing.school_id)) {
+      throw new AppError('Sem permissão', 403);
+    }
+    
     const [updated] = await db('rooms').where({ id }).update({ ...data, updated_at: new Date() }).returning('*');
     if (!updated) throw new AppError('Sala não encontrada', 404);
     return updated;
   }
 
-  async deleteRoom(id: string) {
+  async deleteRoom(id: string, user?: AuthPayload) {
+    const existing = await db('rooms').where({ id }).first();
+    if (!existing) throw new AppError('Sala não encontrada', 404);
+    
+    if (user && !canAccessSchool(user, existing.school_id)) {
+      throw new AppError('Sem permissão', 403);
+    }
+    
     const deleted = await db('rooms').where({ id }).delete();
     if (!deleted) throw new AppError('Sala não encontrada', 404);
   }

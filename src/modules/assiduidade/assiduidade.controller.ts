@@ -10,7 +10,7 @@ export class AssiduidadeController {
   async list(req: AuthRequest, res: Response) {
     try {
       const { page = 1, limit = 20, ...filters } = req.query;
-      const result = await service.list(Number(page), Number(limit), filters);
+      const result = await service.list(Number(page), Number(limit), filters, req.user);
       return sendSuccess(res, result);
     } catch (error: any) {
       logger.error('Erro ao listar presenças:', error);
@@ -20,7 +20,7 @@ export class AssiduidadeController {
 
   async getById(req: AuthRequest, res: Response) {
     try {
-      const record = await service.getById(req.params.id);
+      const record = await service.getById(req.params.id, req.user);
       return sendSuccess(res, record);
     } catch (error: any) {
       return sendError(res, error.message, error.statusCode || 500);
@@ -65,7 +65,7 @@ export class AssiduidadeController {
 
   async update(req: AuthRequest, res: Response) {
     try {
-      const record = await service.update(req.params.id, req.body);
+      const record = await service.update(req.params.id, req.body, req.user);
       return sendSuccess(res, record, 'Registo actualizado');
     } catch (error: any) {
       return sendError(res, error.message, error.statusCode || 500);
@@ -74,7 +74,7 @@ export class AssiduidadeController {
 
   async delete(req: AuthRequest, res: Response) {
     try {
-      const result = await service.delete(req.params.id);
+      const result = await service.delete(req.params.id, req.user);
       return sendSuccess(res, result, 'Registo eliminado');
     } catch (error: any) {
       return sendError(res, error.message, error.statusCode || 500);

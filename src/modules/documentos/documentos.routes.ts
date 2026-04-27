@@ -11,15 +11,15 @@ router.use(authenticate);
 
 router.get('/templates', controller.listTemplates);
 router.get('/templates/:id', controller.getTemplateById);
-router.post('/templates', authorize('admin'), controller.createTemplate);
-router.put('/templates/:id', authorize('admin'), controller.updateTemplate);
-router.delete('/templates/:id', authorize('admin'), controller.deleteTemplate);
+router.post('/templates', authorize('admin', 'gestor'), controller.createTemplate);
+router.put('/templates/:id', authorize('admin', 'gestor'), controller.updateTemplate);
+router.delete('/templates/:id', authorize('admin', 'gestor'), controller.deleteTemplate);
 
 router.get('/', controller.listDocuments);
 router.get('/:id', controller.getDocumentById);
 router.post('/', controller.requestDocument);
-router.put('/:id/status', authorize('admin'), controller.updateDocumentStatus);
-router.post('/:id/upload', authorize('admin'), upload.single('file'), controller.uploadDocumentFile);
-router.delete('/:id', authorize('admin'), controller.deleteDocument);
+router.put('/:id/status', authorize('admin', 'gestor'), controller.updateDocumentStatus);
+router.post('/:id/upload', authorize('admin', 'gestor'), upload.single('file'), controller.uploadDocumentFile);
+router.delete('/:id', authorize('admin', 'gestor'), controller.deleteDocument);
 
 export default router;

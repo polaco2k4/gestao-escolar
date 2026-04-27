@@ -9,7 +9,7 @@ export class ComunicacaoController {
   async listMessages(req: AuthRequest, res: Response) {
     try {
       const { page = 1, limit = 20 } = req.query;
-      const result = await service.listMessages(req.user!.id, Number(page), Number(limit));
+      const result = await service.listMessages(req.user!.id, Number(page), Number(limit), req.user);
       return sendSuccess(res, result);
     } catch (error: any) {
       return sendError(res, error.message, error.statusCode || 500);
@@ -18,7 +18,7 @@ export class ComunicacaoController {
 
   async getMessageById(req: AuthRequest, res: Response) {
     try {
-      const message = await service.getMessageById(req.params.id, req.user!.id);
+      const message = await service.getMessageById(req.params.id, req.user!.id, req.user);
       return sendSuccess(res, message);
     } catch (error: any) {
       return sendError(res, error.message, error.statusCode || 500);
@@ -27,7 +27,7 @@ export class ComunicacaoController {
 
   async sendMessage(req: AuthRequest, res: Response) {
     try {
-      const message = await service.sendMessage(req.user!.id, req.body);
+      const message = await service.sendMessage(req.user!.id, req.body, req.user);
       return sendSuccess(res, message, 'Mensagem enviada', 201);
     } catch (error: any) {
       return sendError(res, error.message, error.statusCode || 500);
@@ -46,7 +46,7 @@ export class ComunicacaoController {
   async listNotifications(req: AuthRequest, res: Response) {
     try {
       const { page = 1, limit = 20 } = req.query;
-      const result = await service.listNotifications(req.user!.id, Number(page), Number(limit));
+      const result = await service.listNotifications(req.user!.id, Number(page), Number(limit), req.user);
       return sendSuccess(res, result);
     } catch (error: any) {
       return sendError(res, error.message, error.statusCode || 500);

@@ -1,56 +1,75 @@
 import db from '../../config/database';
 import { AppError } from '../../middleware/errorHandler';
 import { paginate, buildPaginationMeta } from '../../utils/helpers';
+import { applySchoolFilter, canAccessSchool } from '../../middleware/schoolSegregation';
+import { AuthPayload } from '../../middleware/auth';
 
 export class DocumentosService {
-  async listTemplates(schoolId?: string) {
-    const query = db('document_templates');
-    if (schoolId) query.where('school_id', schoolId);
+  async listTemplates(user?: AuthPayload) {
+    let query = db('document_templates');
+    query = applySchoolFilter(query, user);
     return query.where('active', true).orderBy('name');
   }
 
-  async createTemplate(data: any) {
-    const [template] = await db('document_templates').insert(data).returning('*');
+  async createTemplate(data: any, user?: AuthPayload) {
+    const schoolId = user?.role === 'admin' ? data.school_id : user?.school_id;
+    if (!schoolId) throw new AppError('Escola não especificada', 400);
+    
+    const [template] = await db('document_templates').insert({ ...data, school_id: schoolId }).returning('*');
     return template;
   }
 
-  async getTemplateById(id: string) {
+  async getTemplateById(id: string, user?: AuthPayload) {
     const template = await db('document_templates').where({ id }).first();
     if (!template) throw new AppError('Modelo não encontrado', 404);
+    
+    if (user && !canAccessSchool(user, template.school_id)) {
+      throw new AppError('Sem permissão', 403);
+    }
+    
     return template;
   }
 
-  async updateTemplate(id: string, data: any) {
+  async updateTemplate(id: string, data: any, user?: AuthPayload) {
+    await this.getTemplateById(id, user);
+    
     const [updated] = await db('document_templates').where({ id }).update({ ...data, updated_at: new Date() }).returning('*');
     if (!updated) throw new AppError('Modelo não encontrado', 404);
     return updated;
   }
 
-  async deleteTemplate(id: string) {
+  async deleteTemplate(id: string, user?: AuthPayload) {
+    await this.getTemplateById(id, user);
+    
     const deleted = await db('document_templates').where({ id }).delete();
     if (!deleted) throw new AppError('Modelo não encontrado', 404);
     return { message: 'Modelo eliminado com sucesso' };
   }
 
-  async listDocuments(page = 1, limit = 20, filters: any = {}) {
+  async listDocuments(page = 1, limit = 20, filters: any = {}, user?: AuthPayload) {
     const { offset } = paginate(page, limit);
-    const query = db('documents as d')
+    let query = db('documents as d')
       .leftJoin('students as s', 's.id', 'd.student_id')
       .leftJoin('users as u', 'u.id', 's.user_id')
-      .leftJoin('document_templates as dt', 'dt.id', 'd.template_id')
-      .select('d.*', 'u.first_name', 'u.last_name', 'dt.name as template_name');
+      .leftJoin('document_templates as dt', 'dt.id', 'd.template_id');
+    
+    query = applySchoolFilter(query, user, 'd');
+    
+    query = query.select('d.*', 'u.first_name', 'u.last_name', 'dt.name as template_name');
 
     if (filters.status) query.where('d.status', filters.status);
     if (filters.type) query.where('d.type', filters.type);
     if (filters.student_id) query.where('d.student_id', filters.student_id);
     if (filters.requested_by) query.where('d.requested_by', filters.requested_by);
 
-    const [{ count }] = await db('documents').count('id as count');
+    let countQuery = db('documents as d');
+    countQuery = applySchoolFilter(countQuery, user, 'd');
+    const [{ count }] = await countQuery.count('d.id as count');
     const documents = await query.orderBy('d.created_at', 'desc').limit(limit).offset(offset);
     return { documents, meta: buildPaginationMeta(Number(count), page, limit) };
   }
 
-  async getDocumentById(id: string) {
+  async getDocumentById(id: string, user?: AuthPayload) {
     const document = await db('documents as d')
       .leftJoin('students as s', 's.id', 'd.student_id')
       .leftJoin('users as u', 'u.id', 's.user_id')
@@ -59,15 +78,25 @@ export class DocumentosService {
       .where('d.id', id)
       .first();
     if (!document) throw new AppError('Documento não encontrado', 404);
+    
+    if (user && !canAccessSchool(user, document.school_id)) {
+      throw new AppError('Sem permissão', 403);
+    }
+    
     return document;
   }
 
-  async requestDocument(data: any) {
-    const [document] = await db('documents').insert(data).returning('*');
+  async requestDocument(data: any, user?: AuthPayload) {
+    const schoolId = user?.role === 'admin' ? data.school_id : user?.school_id;
+    if (!schoolId) throw new AppError('Escola não especificada', 400);
+    
+    const [document] = await db('documents').insert({ ...data, school_id: schoolId }).returning('*');
     return document;
   }
 
-  async updateDocumentStatus(id: string, status: string, notes?: string) {
+  async updateDocumentStatus(id: string, status: string, user?: AuthPayload, notes?: string) {
+    await this.getDocumentById(id, user);
+    
     const updateData: any = { status, updated_at: new Date() };
     if (status === 'ready') updateData.generated_at = new Date();
     if (status === 'delivered') updateData.delivered_at = new Date();

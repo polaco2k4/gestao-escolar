@@ -5,7 +5,7 @@ import { sendError } from '../utils/helpers';
 export interface AuthPayload {
   id: string;
   email: string;
-  role: 'admin' | 'professor' | 'estudante' | 'encarregado';
+  role: 'admin' | 'gestor' | 'professor' | 'estudante' | 'encarregado';
   school_id?: string;
 }
 

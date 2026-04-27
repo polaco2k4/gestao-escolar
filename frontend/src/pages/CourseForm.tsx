@@ -2,15 +2,13 @@ import { useState, useEffect } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import coursesService from '../services/courses.service';
 import type { CourseFormData } from '../services/courses.service';
-import schoolsService from '../services/schools.service';
-import type { School } from '../services/schools.service';
+import { SchoolField } from '../components/SchoolField';
 
 export default function CourseForm() {
   const { id } = useParams();
   const navigate = useNavigate();
   const isEdit = !!id;
 
-  const [schools, setSchools] = useState<School[]>([]);
   const [loading, setLoading] = useState(false);
   const [formData, setFormData] = useState<CourseFormData>({
     school_id: '',
@@ -20,9 +18,6 @@ export default function CourseForm() {
     duration_years: 1,
   });
 
-  useEffect(() => {
-    loadSchools();
-  }, []);
 
   useEffect(() => {
     if (isEdit && id) {
@@ -30,15 +25,6 @@ export default function CourseForm() {
     }
   }, [id, isEdit]);
 
-  const loadSchools = async () => {
-    try {
-      const data = await schoolsService.list();
-      setSchools(data);
-    } catch (error) {
-      console.error('Erro ao carregar escolas:', error);
-      alert('Erro ao carregar escolas');
-    }
-  };
 
   const loadCourse = async (courseId: string) => {
     try {
@@ -81,7 +67,13 @@ export default function CourseForm() {
   };
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
-    const value = e.target.type === 'number' ? parseInt(e.target.value) : e.target.value;
+    let value: string | number = e.target.value;
+    
+    if (e.target.type === 'number') {
+      const parsed = parseInt(e.target.value);
+      value = isNaN(parsed) ? '' : parsed;
+    }
+    
     setFormData({
       ...formData,
       [e.target.name]: value,
@@ -99,25 +91,11 @@ export default function CourseForm() {
       <div className="bg-white rounded-lg shadow p-6">
         <form onSubmit={handleSubmit} className="space-y-6">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
-                Escola <span className="text-red-500">*</span>
-              </label>
-              <select
-                name="school_id"
-                value={formData.school_id}
-                onChange={handleChange}
-                required
-                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-              >
-                <option value="">Seleccione uma escola</option>
-                {schools.map((school) => (
-                  <option key={school.id} value={school.id}>
-                    {school.name}
-                  </option>
-                ))}
-              </select>
-            </div>
+            <SchoolField
+              value={formData.school_id}
+              onChange={(value) => setFormData({ ...formData, school_id: value })}
+              required
+            />
 
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-2">
@@ -170,7 +148,7 @@ export default function CourseForm() {
               <input
                 type="number"
                 name="duration_years"
-                value={formData.duration_years}
+                value={formData.duration_years || ''}
                 onChange={handleChange}
                 min="1"
                 max="10"

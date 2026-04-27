@@ -10,7 +10,7 @@ export class HorariosController {
   async listSchedules(req: AuthRequest, res: Response) {
     try {
       const { page = 1, limit = 20, ...filters } = req.query;
-      const result = await service.listSchedules(Number(page), Number(limit), filters);
+      const result = await service.listSchedules(Number(page), Number(limit), filters, req.user);
       return sendSuccess(res, result);
     } catch (error: any) {
       logger.error('Erro ao listar horários:', error);
@@ -20,7 +20,7 @@ export class HorariosController {
 
   async getScheduleById(req: AuthRequest, res: Response) {
     try {
-      const schedule = await service.getScheduleById(req.params.id);
+      const schedule = await service.getScheduleById(req.params.id, req.user);
       return sendSuccess(res, schedule);
     } catch (error: any) {
       return sendError(res, error.message, error.statusCode || 500);
@@ -29,7 +29,7 @@ export class HorariosController {
 
   async createSchedule(req: AuthRequest, res: Response) {
     try {
-      const schedule = await service.createSchedule(req.body);
+      const schedule = await service.createSchedule(req.body, req.user);
       return sendSuccess(res, schedule, 'Horário criado', 201);
     } catch (error: any) {
       return sendError(res, error.message, error.statusCode || 500);
@@ -38,7 +38,7 @@ export class HorariosController {
 
   async updateSchedule(req: AuthRequest, res: Response) {
     try {
-      const schedule = await service.updateSchedule(req.params.id, req.body);
+      const schedule = await service.updateSchedule(req.params.id, req.body, req.user);
       return sendSuccess(res, schedule, 'Horário actualizado');
     } catch (error: any) {
       return sendError(res, error.message, error.statusCode || 500);
@@ -47,7 +47,7 @@ export class HorariosController {
 
   async deleteSchedule(req: AuthRequest, res: Response) {
     try {
-      await service.deleteSchedule(req.params.id);
+      await service.deleteSchedule(req.params.id, req.user);
       return sendSuccess(res, null, 'Horário eliminado');
     } catch (error: any) {
       return sendError(res, error.message, error.statusCode || 500);
@@ -119,7 +119,7 @@ export class HorariosController {
 
   async listRooms(req: AuthRequest, res: Response) {
     try {
-      const rooms = await service.listRooms(req.query);
+      const rooms = await service.listRooms(req.query, req.user);
       return sendSuccess(res, rooms);
     } catch (error: any) {
       return sendError(res, error.message, error.statusCode || 500);
@@ -129,7 +129,7 @@ export class HorariosController {
   async createRoom(req: AuthRequest, res: Response) {
     try {
       logger.info('Creating room with data:', req.body);
-      const room = await service.createRoom(req.body);
+      const room = await service.createRoom(req.body, req.user);
       return sendSuccess(res, room, 'Sala criada', 201);
     } catch (error: any) {
       logger.error('Error creating room:', error);
@@ -139,7 +139,7 @@ export class HorariosController {
 
   async updateRoom(req: AuthRequest, res: Response) {
     try {
-      const room = await service.updateRoom(req.params.id, req.body);
+      const room = await service.updateRoom(req.params.id, req.body, req.user);
       return sendSuccess(res, room, 'Sala actualizada');
     } catch (error: any) {
       return sendError(res, error.message, error.statusCode || 500);
@@ -148,7 +148,7 @@ export class HorariosController {
 
   async deleteRoom(req: AuthRequest, res: Response) {
     try {
-      await service.deleteRoom(req.params.id);
+      await service.deleteRoom(req.params.id, req.user);
       return sendSuccess(res, null, 'Sala eliminada');
     } catch (error: any) {
       return sendError(res, error.message, error.statusCode || 500);

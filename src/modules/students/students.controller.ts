@@ -11,7 +11,7 @@ export class StudentsController {
   async list(req: AuthRequest, res: Response) {
     try {
       const { page = 1, limit = 20, ...filters } = req.query;
-      const result = await service.list(Number(page), Number(limit), filters);
+      const result = await service.list(Number(page), Number(limit), filters, req.user);
       return sendSuccess(res, result);
     } catch (error: any) {
       logger.error('Erro ao listar estudantes:', error);
@@ -39,7 +39,7 @@ export class StudentsController {
 
   async getById(req: AuthRequest, res: Response) {
     try {
-      const student = await service.getById(req.params.id);
+      const student = await service.getById(req.params.id, req.user);
       return sendSuccess(res, student);
     } catch (error: any) {
       return sendError(res, error.message, error.statusCode || 500);

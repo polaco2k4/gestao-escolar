@@ -11,7 +11,7 @@ export class AvaliacoesController {
   async list(req: AuthRequest, res: Response) {
     try {
       const { page = 1, limit = 20, ...filters } = req.query;
-      const result = await service.list(Number(page), Number(limit), filters);
+      const result = await service.list(Number(page), Number(limit), filters, req.user);
       return sendSuccess(res, result);
     } catch (error: any) {
       logger.error('Erro ao listar avaliações:', error);
@@ -39,7 +39,7 @@ export class AvaliacoesController {
 
   async getById(req: AuthRequest, res: Response) {
     try {
-      const assessment = await service.getById(req.params.id);
+      const assessment = await service.getById(req.params.id, req.user);
       return sendSuccess(res, assessment);
     } catch (error: any) {
       return sendError(res, error.message, error.statusCode || 500);
@@ -48,7 +48,7 @@ export class AvaliacoesController {
 
   async create(req: AuthRequest, res: Response) {
     try {
-      const assessment = await service.create(req.body);
+      const assessment = await service.create(req.body, req.user);
       return sendSuccess(res, assessment, 'Avaliação criada', 201);
     } catch (error: any) {
       return sendError(res, error.message, error.statusCode || 500);
@@ -57,7 +57,7 @@ export class AvaliacoesController {
 
   async update(req: AuthRequest, res: Response) {
     try {
-      const assessment = await service.update(req.params.id, req.body);
+      const assessment = await service.update(req.params.id, req.body, req.user);
       return sendSuccess(res, assessment, 'Avaliação actualizada');
     } catch (error: any) {
       return sendError(res, error.message, error.statusCode || 500);
@@ -66,7 +66,7 @@ export class AvaliacoesController {
 
   async delete(req: AuthRequest, res: Response) {
     try {
-      await service.delete(req.params.id);
+      await service.delete(req.params.id, req.user);
       return sendSuccess(res, null, 'Avaliação eliminada');
     } catch (error: any) {
       return sendError(res, error.message, error.statusCode || 500);

@@ -6,7 +6,7 @@ export const registerSchema = z.object({
     password: z.string().min(6, 'Password deve ter pelo menos 6 caracteres'),
     first_name: z.string().min(2, 'Nome deve ter pelo menos 2 caracteres'),
     last_name: z.string().min(2, 'Apelido deve ter pelo menos 2 caracteres'),
-    role: z.enum(['admin', 'professor', 'estudante', 'encarregado']),
+    role: z.enum(['admin', 'gestor', 'professor', 'estudante', 'encarregado']),
     phone: z.string().optional(),
     school_id: z.string().uuid().optional(),
   }),

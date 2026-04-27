@@ -2,7 +2,7 @@ import { Response, NextFunction } from 'express';
 import { AuthRequest } from './auth';
 import { sendError } from '../utils/helpers';
 
-type Role = 'admin' | 'professor' | 'estudante' | 'encarregado';
+type Role = 'admin' | 'gestor' | 'professor' | 'estudante' | 'encarregado';
 
 export function authorize(...roles: Role[]) {
   return (req: AuthRequest, res: Response, next: NextFunction) => {

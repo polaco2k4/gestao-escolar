@@ -1,5 +1,7 @@
 import db from '../../config/database';
 import { AppError } from '../../middleware/errorHandler';
+import { AuthPayload } from '../../middleware/auth';
+import bcrypt from 'bcryptjs';
 
 export class SchoolsService {
   async list() {
@@ -26,6 +28,12 @@ export class SchoolsService {
     phone?: string;
     email?: string;
     logo_url?: string;
+    // Dados do gestor (opcionais)
+    gestor_email?: string;
+    gestor_password?: string;
+    gestor_first_name?: string;
+    gestor_last_name?: string;
+    gestor_phone?: string;
   }) {
     const existingSchool = await db('schools')
       .where('code', data.code)
@@ -35,15 +43,59 @@ export class SchoolsService {
       throw new AppError('Já existe uma escola com este código', 400);
     }
 
-    const [school] = await db('schools')
-      .insert({
-        ...data,
-        created_at: new Date(),
-        updated_at: new Date()
-      })
-      .returning('*');
+    // Verificar se email do gestor já existe
+    if (data.gestor_email) {
+      const existingUser = await db('users')
+        .where('email', data.gestor_email)
+        .first();
+      
+      if (existingUser) {
+        throw new AppError('Já existe um utilizador com este email', 400);
+      }
+    }
 
-    return school;
+    // Usar transação para criar escola e gestor
+    const result = await db.transaction(async (trx) => {
+      // Criar escola
+      const [school] = await trx('schools')
+        .insert({
+          name: data.name,
+          code: data.code,
+          address: data.address,
+          phone: data.phone,
+          email: data.email,
+          logo_url: data.logo_url,
+          created_at: new Date(),
+          updated_at: new Date()
+        })
+        .returning('*');
+
+      let gestor = null;
+
+      // Criar gestor se os dados foram fornecidos
+      if (data.gestor_email && data.gestor_password && data.gestor_first_name && data.gestor_last_name) {
+        const password_hash = await bcrypt.hash(data.gestor_password, 12);
+        
+        [gestor] = await trx('users')
+          .insert({
+            email: data.gestor_email,
+            password_hash,
+            first_name: data.gestor_first_name,
+            last_name: data.gestor_last_name,
+            phone: data.gestor_phone,
+            role: 'gestor',
+            school_id: school.id,
+            active: true,
+            created_at: new Date(),
+            updated_at: new Date()
+          })
+          .returning(['id', 'email', 'first_name', 'last_name', 'role', 'school_id']);
+      }
+
+      return { school, gestor };
+    });
+
+    return result;
   }
 
   async update(id: string, data: {
@@ -87,8 +139,12 @@ export class SchoolsService {
     return { message: 'Escola eliminada com sucesso' };
   }
 
-  async getStats(id: string) {
-    const school = await this.getById(id);
+  async getStats(id: string, user?: AuthPayload) {
+    // Se for gestor, usar sua escola automaticamente
+    const schoolId = user?.role === 'gestor' ? user.school_id : id;
+    if (!schoolId) throw new AppError('Escola não especificada', 400);
+    
+    const school = await this.getById(schoolId);
 
     const [stats] = await db.raw(`
       SELECT 
@@ -96,7 +152,7 @@ export class SchoolsService {
         (SELECT COUNT(*) FROM users WHERE school_id = ? AND role = 'professor') as total_teachers,
         (SELECT COUNT(*) FROM classes WHERE school_id = ?) as total_classes,
         (SELECT COUNT(*) FROM courses WHERE school_id = ? AND active = true) as total_courses
-    `, [id, id, id, id]);
+    `, [schoolId, schoolId, schoolId, schoolId]);
 
     return {
       school,

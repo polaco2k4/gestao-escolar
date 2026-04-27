@@ -156,7 +156,7 @@ export default function AvaliacaoNotas() {
             {assessment.name} - {assessment.class_name} - {assessment.subject_name}
           </p>
         </div>
-        {(user?.role === 'admin' || user?.role === 'professor') && (
+        {(user?.role === 'admin' || user?.role === 'gestor' || user?.role === 'professor') && (
           <button
             onClick={handleSave}
             disabled={saving}
@@ -179,7 +179,7 @@ export default function AvaliacaoNotas() {
               <p className="text-sm font-medium text-green-900">Nota Máxima</p>
               <p className="mt-1 text-lg font-semibold text-green-600">{assessment.max_score || 20}</p>
             </div>
-            {(user?.role === 'admin' || user?.role === 'professor') && (
+            {(user?.role === 'admin' || user?.role === 'gestor' || user?.role === 'professor') && (
               <div className="bg-purple-50 p-4 rounded-lg">
                 <p className="text-sm font-medium text-purple-900">Média da Turma</p>
                 <p className="mt-1 text-lg font-semibold text-purple-600">{calculateAverage()}</p>

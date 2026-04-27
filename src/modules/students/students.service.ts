@@ -1,6 +1,8 @@
 import db from '../../config/database';
 import { AppError } from '../../middleware/errorHandler';
 import { paginate, buildPaginationMeta, generateCode } from '../../utils/helpers';
+import { applySchoolFilter, canAccessSchool } from '../../middleware/schoolSegregation';
+import { AuthPayload } from '../../middleware/auth';
 import bcrypt from 'bcryptjs';
 
 export class StudentsService {
@@ -61,13 +63,17 @@ export class StudentsService {
     return { students, meta };
   }
 
-  async list(page = 1, limit = 20, filters: any = {}) {
+  async list(page = 1, limit = 20, filters: any = {}, user?: AuthPayload) {
     const { offset } = paginate(page, limit);
-    const query = db('students as s')
+    let query = db('students as s')
       .join('users as u', 'u.id', 's.user_id')
       .leftJoin('guardians as g', 'g.id', 's.guardian_id')
-      .leftJoin('users as gu', 'gu.id', 'g.user_id')
-      .select(
+      .leftJoin('users as gu', 'gu.id', 'g.user_id');
+    
+    // Aplicar filtro de escola (usando alias 's' para students)
+    query = applySchoolFilter(query, user, 's');
+    
+    query = query.select(
         's.id',
         's.user_id',
         's.student_number',
@@ -99,9 +105,13 @@ export class StudentsService {
     if (filters.gender) query.where('s.gender', filters.gender);
     if (filters.active !== undefined) query.where('u.active', filters.active);
 
-    const [{ count }] = await db('students as s')
-      .join('users as u', 'u.id', 's.user_id')
-      .where(function () {
+    let countQuery = db('students as s')
+      .join('users as u', 'u.id', 's.user_id');
+    
+    // Aplicar filtro de escola na contagem (usando alias 's' para students)
+    countQuery = applySchoolFilter(countQuery, user, 's');
+    
+    const [{ count }] = await countQuery.where(function () {
         if (filters.search) {
           this.where('u.first_name', 'ilike', `%${filters.search}%`)
             .orWhere('u.last_name', 'ilike', `%${filters.search}%`)
@@ -116,7 +126,7 @@ export class StudentsService {
     return { students, meta };
   }
 
-  async getById(id: string) {
+  async getById(id: string, user?: AuthPayload) {
     const student = await db('students as s')
       .join('users as u', 'u.id', 's.user_id')
       .leftJoin('guardians as g', 'g.id', 's.guardian_id')
@@ -139,6 +149,12 @@ export class StudentsService {
       .first();
 
     if (!student) throw new AppError('Estudante não encontrado', 404);
+    
+    // Validar acesso à escola
+    if (user && !canAccessSchool(user, student.school_id)) {
+      throw new AppError('Sem permissão para acessar este estudante', 403);
+    }
+    
     return student;
   }
 

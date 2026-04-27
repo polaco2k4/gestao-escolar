@@ -2,19 +2,17 @@ import { useState, useEffect } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import classesService from '../services/classes.service';
 import type { ClassFormData } from '../services/classes.service';
-import schoolsService from '../services/schools.service';
-import type { School } from '../services/schools.service';
 import academicYearsService from '../services/academicYears.service';
 import type { AcademicYear } from '../services/academicYears.service';
 import coursesService from '../services/courses.service';
 import type { Course } from '../services/courses.service';
+import { SchoolField } from '../components/SchoolField';
 
 export default function TurmaForm() {
   const { id } = useParams();
   const navigate = useNavigate();
   const isEdit = !!id;
 
-  const [schools, setSchools] = useState<School[]>([]);
   const [academicYears, setAcademicYears] = useState<AcademicYear[]>([]);
   const [courses, setCourses] = useState<Course[]>([]);
   const [loading, setLoading] = useState(false);
@@ -40,12 +38,10 @@ export default function TurmaForm() {
 
   const loadData = async () => {
     try {
-      const [schoolsData, yearsData, coursesData] = await Promise.all([
-        schoolsService.list(),
+      const [yearsData, coursesData] = await Promise.all([
         academicYearsService.list(),
         coursesService.list(),
       ]);
-      setSchools(schoolsData);
       setAcademicYears(yearsData);
       setCourses(coursesData);
     } catch (error) {
@@ -98,7 +94,13 @@ export default function TurmaForm() {
   };
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
-    const value = e.target.type === 'number' ? parseInt(e.target.value) : e.target.value;
+    let value: string | number = e.target.value;
+    
+    if (e.target.type === 'number') {
+      const parsed = parseInt(e.target.value);
+      value = isNaN(parsed) ? '' : parsed;
+    }
+    
     setFormData({
       ...formData,
       [e.target.name]: value,
@@ -116,25 +118,11 @@ export default function TurmaForm() {
       <div className="bg-white rounded-lg shadow p-6">
         <form onSubmit={handleSubmit} className="space-y-6">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
-                Escola <span className="text-red-500">*</span>
-              </label>
-              <select
-                name="school_id"
-                value={formData.school_id}
-                onChange={handleChange}
-                required
-                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-              >
-                <option value="">Seleccione uma escola</option>
-                {schools.map((school) => (
-                  <option key={school.id} value={school.id}>
-                    {school.name}
-                  </option>
-                ))}
-              </select>
-            </div>
+            <SchoolField
+              value={formData.school_id}
+              onChange={(value) => setFormData({ ...formData, school_id: value })}
+              required
+            />
 
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-2">
@@ -198,7 +186,7 @@ export default function TurmaForm() {
               <input
                 type="number"
                 name="year_level"
-                value={formData.year_level}
+                value={formData.year_level || ''}
                 onChange={handleChange}
                 required
                 min="1"
@@ -228,7 +216,7 @@ export default function TurmaForm() {
               <input
                 type="number"
                 name="max_students"
-                value={formData.max_students}
+                value={formData.max_students || ''}
                 onChange={handleChange}
                 min="1"
                 className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"

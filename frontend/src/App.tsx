@@ -1,6 +1,7 @@
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import { AuthProvider } from './contexts/AuthContext';
 import ProtectedRoute from './components/ProtectedRoute';
+import RoleProtectedRoute from './components/RoleProtectedRoute';
 import Layout from './components/Layout';
 import Login from './pages/Login';
 import Register from './pages/Register';
@@ -61,9 +62,9 @@ function App() {
             <Route path="estudantes/novo" element={<EstudanteForm />} />
             <Route path="estudantes/:id" element={<EstudanteDetail />} />
             <Route path="estudantes/:id/editar" element={<EstudanteForm />} />
-            <Route path="escolas" element={<Escolas />} />
-            <Route path="escolas/novo" element={<EscolaForm />} />
-            <Route path="escolas/:id/editar" element={<EscolaForm />} />
+            <Route path="escolas" element={<RoleProtectedRoute allowedRoles={['admin']}><Escolas /></RoleProtectedRoute>} />
+            <Route path="escolas/novo" element={<RoleProtectedRoute allowedRoles={['admin']}><EscolaForm /></RoleProtectedRoute>} />
+            <Route path="escolas/:id/editar" element={<RoleProtectedRoute allowedRoles={['admin']}><EscolaForm /></RoleProtectedRoute>} />
             <Route path="courses" element={<Courses />} />
             <Route path="courses/novo" element={<CourseForm />} />
             <Route path="courses/:id/editar" element={<CourseForm />} />

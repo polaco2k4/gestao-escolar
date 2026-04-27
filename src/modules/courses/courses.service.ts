@@ -1,40 +1,52 @@
 import db from '../../config/database';
 import { AppError } from '../../middleware/errorHandler';
+import { applySchoolFilter, canAccessSchool } from '../../middleware/schoolSegregation';
+import { AuthPayload } from '../../middleware/auth';
 
 export class CoursesService {
-  async list(filters: { school_id?: string } = {}) {
-    const query = db('courses')
+  async list(user?: AuthPayload) {
+    let query = db('courses')
       .select('*')
-      .where('active', true)
-      .orderBy('name', 'asc');
-
-    if (filters.school_id) {
-      query.where('school_id', filters.school_id);
-    }
-
-    const courses = await query;
+      .where('active', true);
+    
+    // Aplicar filtro de escola
+    query = applySchoolFilter(query, user);
+    
+    const courses = await query.orderBy('name', 'asc');
     return { courses };
   }
 
-  async getById(id: string) {
+  async getById(id: string, user?: AuthPayload) {
     const course = await db('courses')
       .where('id', id)
       .first();
 
     if (!course) throw new AppError('Curso não encontrado', 404);
+    
+    // Validar acesso à escola
+    if (user && !canAccessSchool(user, course.school_id)) {
+      throw new AppError('Sem permissão para acessar este curso', 403);
+    }
+    
     return course;
   }
 
   async create(data: {
-    school_id: string;
+    school_id?: string;
     name: string;
     code: string;
     level?: string;
     duration_years?: number;
-  }) {
+  }, user?: AuthPayload) {
+    // Admin pode escolher escola, outros usam sua própria escola
+    const schoolId = user?.role === 'admin' ? data.school_id : user?.school_id;
+    
+    if (!schoolId) {
+      throw new AppError('Escola não especificada', 400);
+    }
     const existingCourse = await db('courses')
       .where('code', data.code)
-      .where('school_id', data.school_id)
+      .where('school_id', schoolId)
       .first();
 
     if (existingCourse) {
@@ -44,6 +56,7 @@ export class CoursesService {
     const [course] = await db('courses')
       .insert({
         ...data,
+        school_id: schoolId,
         active: true,
         created_at: new Date(),
         updated_at: new Date()
@@ -59,7 +72,10 @@ export class CoursesService {
     level?: string;
     duration_years?: number;
     active?: boolean;
-  }) {
+  }, user?: AuthPayload) {
+    // Validar acesso primeiro
+    await this.getById(id, user);
+    
     const [course] = await db('courses')
       .where('id', id)
       .update({
@@ -72,7 +88,10 @@ export class CoursesService {
     return course;
   }
 
-  async delete(id: string) {
+  async delete(id: string, user?: AuthPayload) {
+    // Validar acesso primeiro
+    await this.getById(id, user);
+    
     const classes = await db('classes')
       .where('course_id', id)
       .count('* as count')

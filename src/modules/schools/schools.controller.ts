@@ -57,7 +57,7 @@ export class SchoolsController {
 
   async getStats(req: AuthRequest, res: Response) {
     try {
-      const result = await service.getStats(req.params.id);
+      const result = await service.getStats(req.params.id, req.user);
       return sendSuccess(res, result);
     } catch (error: any) {
       return sendError(res, error.message, error.statusCode || 500);

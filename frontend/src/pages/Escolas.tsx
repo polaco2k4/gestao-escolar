@@ -2,8 +2,10 @@ import { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import schoolsService from '../services/schools.service';
 import type { School } from '../services/schools.service';
+import { useAuth } from '../contexts/AuthContext';
 
 export default function Escolas() {
+  const { user } = useAuth();
   const [schools, setSchools] = useState<School[]>([]);
   const [loading, setLoading] = useState(true);
 
@@ -51,12 +53,14 @@ export default function Escolas() {
     <div className="space-y-6">
       <div className="flex justify-between items-center">
         <h1 className="text-3xl font-bold text-gray-900">Escolas</h1>
-        <Link
-          to="/escolas/novo"
-          className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg font-medium transition-colors"
-        >
-          + Nova Escola
-        </Link>
+        {user?.role === 'admin' && (
+          <Link
+            to="/escolas/novo"
+            className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg font-medium transition-colors"
+          >
+            + Nova Escola
+          </Link>
+        )}
       </div>
 
       <div className="bg-white rounded-lg shadow p-6">

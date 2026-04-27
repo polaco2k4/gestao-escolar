@@ -5,7 +5,7 @@ export interface RegisterData {
   password: string;
   first_name: string;
   last_name: string;
-  role: 'admin' | 'professor' | 'estudante' | 'encarregado';
+  role: 'admin' | 'gestor' | 'professor' | 'estudante' | 'encarregado';
   phone?: string;
   school_id?: string;
 }

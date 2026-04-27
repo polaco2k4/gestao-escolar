@@ -1,16 +1,22 @@
 import db from '../../config/database';
 import { AppError } from '../../middleware/errorHandler';
 import { paginate, buildPaginationMeta, generateCode } from '../../utils/helpers';
+import { applySchoolFilter, canAccessSchool } from '../../middleware/schoolSegregation';
+import { AuthPayload } from '../../middleware/auth';
 
 export class MatriculasService {
-  async list(page = 1, limit = 20, filters: any = {}) {
+  async list(page = 1, limit = 20, filters: any = {}, user?: AuthPayload) {
     const { offset } = paginate(page, limit);
-    const query = db('enrollments as e')
+    let query = db('enrollments as e')
       .join('students as s', 's.id', 'e.student_id')
       .join('users as u', 'u.id', 's.user_id')
       .join('classes as c', 'c.id', 'e.class_id')
-      .join('academic_years as ay', 'ay.id', 'e.academic_year_id')
-      .select(
+      .join('academic_years as ay', 'ay.id', 'e.academic_year_id');
+    
+    // Aplicar filtro de escola (usando alias 'e' para enrollments)
+    query = applySchoolFilter(query, user, 'e');
+    
+    query = query.select(
         'e.*',
         'u.first_name', 'u.last_name', 'u.email',
         's.student_number',
@@ -18,7 +24,7 @@ export class MatriculasService {
         'ay.name as academic_year_name'
       );
 
-    if (filters.school_id) query.where('e.school_id', filters.school_id);
+    // Remover filtro manual de school_id (já aplicado automaticamente)
     if (filters.academic_year_id) query.where('e.academic_year_id', filters.academic_year_id);
     if (filters.class_id) query.where('e.class_id', filters.class_id);
     if (filters.status) query.where('e.status', filters.status);
@@ -30,11 +36,15 @@ export class MatriculasService {
       });
     }
 
-    const [{ count }] = await db('enrollments as e')
+    let countQuery = db('enrollments as e')
       .join('students as s', 's.id', 'e.student_id')
-      .join('users as u', 'u.id', 's.user_id')
+      .join('users as u', 'u.id', 's.user_id');
+    
+    // Aplicar filtro de escola na contagem (usando alias 'e' para enrollments)
+    countQuery = applySchoolFilter(countQuery, user, 'e');
+    
+    const [{ count }] = await countQuery
       .where(function () {
-        if (filters.school_id) this.where('e.school_id', filters.school_id);
         if (filters.status) this.where('e.status', filters.status);
       })
       .count('e.id as count');
@@ -45,7 +55,7 @@ export class MatriculasService {
     return { enrollments, meta };
   }
 
-  async getById(id: string) {
+  async getById(id: string, user?: AuthPayload) {
     const enrollment = await db('enrollments as e')
       .join('students as s', 's.id', 'e.student_id')
       .join('users as u', 'u.id', 's.user_id')
@@ -62,10 +72,16 @@ export class MatriculasService {
       .first();
 
     if (!enrollment) throw new AppError('Matrícula não encontrada', 404);
+    
+    // Validar acesso à escola
+    if (user && !canAccessSchool(user, enrollment.school_id)) {
+      throw new AppError('Sem permissão para acessar esta matrícula', 403);
+    }
+    
     return enrollment;
   }
 
-  async create(data: any) {
+  async create(data: any, user?: AuthPayload) {
     const existing = await db('enrollments')
       .where({ student_id: data.student_id, academic_year_id: data.academic_year_id })
       .first();
@@ -93,7 +109,10 @@ export class MatriculasService {
     return enrollment;
   }
 
-  async update(id: string, data: any) {
+  async update(id: string, data: any, user?: AuthPayload) {
+    // Validar acesso primeiro
+    await this.getById(id, user);
+    
     const existing = await db('enrollments').where({ id }).first();
     if (!existing) throw new AppError('Matrícula não encontrada', 404);
 

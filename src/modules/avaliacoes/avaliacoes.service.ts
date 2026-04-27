@@ -1,6 +1,8 @@
 import db from '../../config/database';
 import { AppError } from '../../middleware/errorHandler';
 import { paginate, buildPaginationMeta } from '../../utils/helpers';
+import { applySchoolFilter, canAccessSchool } from '../../middleware/schoolSegregation';
+import { AuthPayload } from '../../middleware/auth';
 import {
   CreateAssessmentDTO,
   UpdateAssessmentDTO,
@@ -65,33 +67,39 @@ export class AvaliacoesService {
     return { assessments, meta: buildPaginationMeta(Number(count), page, limit) };
   }
 
-  async list(page = 1, limit = 20, filters: AssessmentFilters = {}) {
+  async list(page = 1, limit = 20, filters: AssessmentFilters = {}, user?: AuthPayload) {
     const { offset } = paginate(page, limit);
-    const query = db('assessments as a')
+    let query = db('assessments as a')
       .join('subjects as sub', 'sub.id', 'a.subject_id')
       .join('classes as c', 'c.id', 'a.class_id')
       .join('teachers as t', 't.id', 'a.teacher_id')
       .join('users as u', 'u.id', 't.user_id')
-      .join('assessment_types as at', 'at.id', 'a.assessment_type_id')
-      .select('a.*', 'sub.name as subject_name', 'c.name as class_name', 'u.first_name as teacher_first_name', 'u.last_name as teacher_last_name', 'at.name as type_name');
+      .join('assessment_types as at', 'at.id', 'a.assessment_type_id');
+    
+    // Aplicar filtro de escola (usando alias 'a' para assessments)
+    query = applySchoolFilter(query, user, 'a');
+    
+    query = query.select('a.*', 'sub.name as subject_name', 'c.name as class_name', 'u.first_name as teacher_first_name', 'u.last_name as teacher_last_name', 'at.name as type_name');
 
     if (filters.class_id) query.where('a.class_id', filters.class_id);
     if (filters.subject_id) query.where('a.subject_id', filters.subject_id);
     if (filters.trimester) query.where('a.trimester', filters.trimester);
     if (filters.teacher_id) query.where('a.teacher_id', filters.teacher_id);
 
-    const countQuery = db('assessments as a').count('a.id as count');
+    let countQuery = db('assessments as a');
+    countQuery = applySchoolFilter(countQuery, user, 'a');
+    
     if (filters.class_id) countQuery.where('a.class_id', filters.class_id);
     if (filters.subject_id) countQuery.where('a.subject_id', filters.subject_id);
     if (filters.trimester) countQuery.where('a.trimester', filters.trimester);
     if (filters.teacher_id) countQuery.where('a.teacher_id', filters.teacher_id);
-    const [{ count }] = await countQuery;
+    const [{ count }] = await countQuery.count('a.id as count');
 
     const assessments = await query.orderBy('a.date', 'desc').limit(limit).offset(offset);
     return { assessments, meta: buildPaginationMeta(Number(count), page, limit) };
   }
 
-  async getById(id: string) {
+  async getById(id: string, user?: AuthPayload) {
     const assessment = await db('assessments as a')
       .join('subjects as sub', 'sub.id', 'a.subject_id')
       .join('classes as c', 'c.id', 'a.class_id')
@@ -101,11 +109,20 @@ export class AvaliacoesService {
       .first();
 
     if (!assessment) throw new AppError('Avaliação não encontrada', 404);
+    
+    // Validar acesso à escola
+    if (user && !canAccessSchool(user, assessment.school_id)) {
+      throw new AppError('Sem permissão para acessar esta avaliação', 403);
+    }
+    
     return assessment;
   }
 
-  async create(data: CreateAssessmentDTO) {
-    if (!data.school_id) throw new AppError('ID da escola é obrigatório', 400);
+  async create(data: CreateAssessmentDTO, user?: AuthPayload) {
+    // Admin pode escolher escola, outros usam sua própria escola
+    const schoolId = user?.role === 'admin' ? data.school_id : user?.school_id;
+    
+    if (!schoolId) throw new AppError('Escola não especificada', 400);
     if (!data.academic_year_id) throw new AppError('ID do ano académico é obrigatório', 400);
     if (!data.class_id) throw new AppError('ID da turma é obrigatório', 400);
     if (!data.subject_id) throw new AppError('ID da disciplina é obrigatório', 400);
@@ -113,17 +130,23 @@ export class AvaliacoesService {
     if (!data.assessment_type_id) throw new AppError('ID do tipo de avaliação é obrigatório', 400);
     if (!data.name) throw new AppError('Nome da avaliação é obrigatório', 400);
 
-    const [assessment] = await db('assessments').insert(data).returning('*');
+    const [assessment] = await db('assessments').insert({ ...data, school_id: schoolId }).returning('*');
     return assessment;
   }
 
-  async update(id: string, data: UpdateAssessmentDTO) {
+  async update(id: string, data: UpdateAssessmentDTO, user?: AuthPayload) {
+    // Validar acesso primeiro
+    await this.getById(id, user);
+    
     const [updated] = await db('assessments').where({ id }).update({ ...data, updated_at: new Date() }).returning('*');
     if (!updated) throw new AppError('Avaliação não encontrada', 404);
     return updated;
   }
 
-  async delete(id: string) {
+  async delete(id: string, user?: AuthPayload) {
+    // Validar acesso primeiro
+    await this.getById(id, user);
+    
     const deleted = await db('assessments').where({ id }).delete();
     if (!deleted) throw new AppError('Avaliação não encontrada', 404);
   }

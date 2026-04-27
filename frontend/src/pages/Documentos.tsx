@@ -319,7 +319,7 @@ export default function Documentos() {
           >
             Documentos
           </button>
-          {user?.role === 'admin' && (
+          {(user?.role === 'admin' || user?.role === 'gestor') && (
             <button
               onClick={() => setActiveTab('templates')}
               className={`py-4 px-1 border-b-2 font-medium text-sm ${
@@ -471,7 +471,7 @@ export default function Documentos() {
                           >
                             <Eye className="w-4 h-4" />
                           </button>
-                          {user?.role === 'admin' && (
+                          {(user?.role === 'admin' || user?.role === 'gestor') && (
                             <>
                               <button
                                 onClick={() => handleUploadClick(doc.id)}

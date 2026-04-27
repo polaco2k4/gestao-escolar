@@ -10,7 +10,7 @@ export class MatriculasController {
   async list(req: AuthRequest, res: Response) {
     try {
       const { page = 1, limit = 20, ...filters } = req.query;
-      const result = await service.list(Number(page), Number(limit), filters);
+      const result = await service.list(Number(page), Number(limit), filters, req.user);
       return sendSuccess(res, result);
     } catch (error: any) {
       logger.error('Erro ao listar matrículas:', error);
@@ -20,7 +20,7 @@ export class MatriculasController {
 
   async getById(req: AuthRequest, res: Response) {
     try {
-      const enrollment = await service.getById(req.params.id);
+      const enrollment = await service.getById(req.params.id, req.user);
       return sendSuccess(res, enrollment);
     } catch (error: any) {
       return sendError(res, error.message, error.statusCode || 500);
@@ -29,7 +29,7 @@ export class MatriculasController {
 
   async create(req: AuthRequest, res: Response) {
     try {
-      const enrollment = await service.create(req.body);
+      const enrollment = await service.create(req.body, req.user);
       return sendSuccess(res, enrollment, 'Matrícula criada com sucesso', 201);
     } catch (error: any) {
       logger.error('Erro ao criar matrícula:', error);
@@ -39,7 +39,7 @@ export class MatriculasController {
 
   async update(req: AuthRequest, res: Response) {
     try {
-      const enrollment = await service.update(req.params.id, req.body);
+      const enrollment = await service.update(req.params.id, req.body, req.user);
       return sendSuccess(res, enrollment, 'Matrícula actualizada');
     } catch (error: any) {
       return sendError(res, error.message, error.statusCode || 500);

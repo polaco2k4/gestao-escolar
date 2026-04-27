@@ -136,7 +136,7 @@ export default function Assiduidade() {
             <Filter className="w-4 h-4" />
             Filtros
           </button>
-          {(user?.role === 'admin' || user?.role === 'professor') && (
+          {(user?.role === 'admin' || user?.role === 'gestor' || user?.role === 'professor') && (
             <button
               onClick={() => setShowModal(true)}
               className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700"
@@ -319,7 +319,7 @@ export default function Assiduidade() {
                       {record.remarks || '-'}
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
-                      {(user?.role === 'admin' || user?.role === 'professor') && (
+                      {(user?.role === 'admin' || user?.role === 'gestor' || user?.role === 'professor') && (
                         <div className="flex justify-end gap-2">
                           <button
                             onClick={() => handleEditOpen(record)}

@@ -40,7 +40,7 @@ export default function Encarregados() {
     <div className="space-y-6">
       <div className="flex justify-between items-center">
         <h1 className="text-3xl font-bold text-gray-900">Encarregados</h1>
-        {user?.role === 'admin' && (
+        {(user?.role === 'admin' || user?.role === 'gestor') && (
           <Link
             to="/encarregados/novo"
             className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg font-medium transition-colors"

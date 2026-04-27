@@ -33,7 +33,7 @@ export default function Layout() {
 
   // Redirect non-admin users away from dashboard
   useEffect(() => {
-    if (location.pathname === '/dashboard' && user?.role !== 'admin') {
+    if (location.pathname === '/dashboard' && user?.role !== 'admin' && user?.role !== 'gestor') {
       if (user?.role === 'estudante') {
         navigate('/subjects');
       } else if (user?.role === 'professor') {
@@ -45,25 +45,25 @@ export default function Layout() {
   }, [location.pathname, user?.role, navigate]);
 
   const allNavigation = [
-    { name: 'Dashboard', href: '/dashboard', icon: LayoutDashboard, roles: ['admin'] },
+    { name: 'Dashboard', href: '/dashboard', icon: LayoutDashboard, roles: ['admin', 'gestor'] },
     { name: 'Escolas', href: '/escolas', icon: School, roles: ['admin'] },
-    { name: 'Cursos', href: '/courses', icon: Briefcase, roles: ['admin'] },
-    { name: 'Turmas', href: '/turmas', icon: UsersRound, roles: ['admin', 'professor'] },
-    { name: 'Matrículas', href: '/matriculas', icon: GraduationCap, roles: ['admin'] },
-    { name: 'Estudantes', href: '/estudantes', icon: Users, roles: ['admin', 'professor'] },
+    { name: 'Cursos', href: '/courses', icon: Briefcase, roles: ['admin', 'gestor'] },
+    { name: 'Turmas', href: '/turmas', icon: UsersRound, roles: ['admin', 'gestor', 'professor'] },
+    { name: 'Matrículas', href: '/matriculas', icon: GraduationCap, roles: ['admin', 'gestor'] },
+    { name: 'Estudantes', href: '/estudantes', icon: Users, roles: ['admin', 'gestor', 'professor'] },
     { name: 'Meus Educandos', href: '/meus-educandos', icon: Users, roles: ['encarregado'] },
-    { name: 'Disciplinas', href: '/subjects', icon: Book, roles: ['admin', 'professor', 'estudante', 'encarregado'] },
-    { name: 'Professores', href: '/teachers', icon: UserCheck, roles: ['admin'] },
-    { name: 'Encarregados', href: '/encarregados', icon: Users, roles: ['admin'] },
-    { name: 'Tipos de Avaliação', href: '/assessment-types', icon: ClipboardCheck, roles: ['admin'] },
-    { name: 'Avaliações', href: '/avaliacoes', icon: FileText, roles: ['admin', 'professor', 'estudante', 'encarregado'] },
-    { name: 'Horários', href: '/horarios', icon: Calendar, roles: ['admin', 'professor', 'estudante', 'encarregado'] },
-    { name: 'Salas', href: '/salas', icon: MapPin, roles: ['admin'] },
-    { name: 'Financeiro', href: '/financeiro', icon: DollarSign, roles: ['admin', 'encarregado'] },
-    { name: 'Comunicação', href: '/comunicacao', icon: MessageSquare, roles: ['admin', 'professor', 'estudante', 'encarregado'] },
-    { name: 'Assiduidade', href: '/assiduidade', icon: ClipboardList, roles: ['admin', 'professor', 'estudante', 'encarregado'] },
-    { name: 'Documentos', href: '/documentos', icon: BookOpen, roles: ['admin', 'professor', 'estudante', 'encarregado'] },
-    { name: 'Relatórios', href: '/relatorios', icon: BarChart, roles: ['admin', 'professor'] },
+    { name: 'Disciplinas', href: '/subjects', icon: Book, roles: ['admin', 'gestor', 'professor', 'estudante', 'encarregado'] },
+    { name: 'Professores', href: '/teachers', icon: UserCheck, roles: ['admin', 'gestor'] },
+    { name: 'Encarregados', href: '/encarregados', icon: Users, roles: ['admin', 'gestor'] },
+    { name: 'Tipos de Avaliação', href: '/assessment-types', icon: ClipboardCheck, roles: ['admin', 'gestor'] },
+    { name: 'Avaliações', href: '/avaliacoes', icon: FileText, roles: ['admin', 'gestor', 'professor', 'estudante', 'encarregado'] },
+    { name: 'Horários', href: '/horarios', icon: Calendar, roles: ['admin', 'gestor', 'professor', 'estudante', 'encarregado'] },
+    { name: 'Salas', href: '/salas', icon: MapPin, roles: ['admin', 'gestor'] },
+    { name: 'Financeiro', href: '/financeiro', icon: DollarSign, roles: ['admin', 'gestor', 'encarregado'] },
+    { name: 'Comunicação', href: '/comunicacao', icon: MessageSquare, roles: ['admin', 'gestor', 'professor', 'estudante', 'encarregado'] },
+    { name: 'Assiduidade', href: '/assiduidade', icon: ClipboardList, roles: ['admin', 'gestor', 'professor', 'estudante', 'encarregado'] },
+    { name: 'Documentos', href: '/documentos', icon: BookOpen, roles: ['admin', 'gestor', 'professor', 'estudante', 'encarregado'] },
+    { name: 'Relatórios', href: '/relatorios', icon: BarChart, roles: ['admin', 'gestor', 'professor'] },
   ];
 
   // Filtrar navegação baseado na role do usuário

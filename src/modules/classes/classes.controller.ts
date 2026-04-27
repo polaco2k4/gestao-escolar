@@ -8,7 +8,7 @@ const service = new ClassesService();
 export class ClassesController {
   async list(req: AuthRequest, res: Response) {
     try {
-      const result = await service.list();
+      const result = await service.list(req.user);
       return sendSuccess(res, result);
     } catch (error: any) {
       return sendError(res, error.message, error.statusCode || 500);
@@ -17,7 +17,7 @@ export class ClassesController {
 
   async getById(req: AuthRequest, res: Response) {
     try {
-      const classData = await service.getById(req.params.id);
+      const classData = await service.getById(req.params.id, req.user);
       return sendSuccess(res, classData);
     } catch (error: any) {
       return sendError(res, error.message, error.statusCode || 500);
@@ -26,7 +26,7 @@ export class ClassesController {
 
   async create(req: AuthRequest, res: Response) {
     try {
-      const classData = await service.create(req.body);
+      const classData = await service.create(req.body, req.user);
       return res.status(201).json({
         success: true,
         message: 'Turma criada com sucesso',

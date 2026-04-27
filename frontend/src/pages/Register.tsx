@@ -10,7 +10,7 @@ export default function Register() {
     password: '',
     first_name: '',
     last_name: '',
-    role: 'estudante' as 'admin' | 'professor' | 'estudante',
+    role: 'estudante' as 'admin' | 'gestor' | 'professor' | 'estudante',
     phone: '',
   });
   const [error, setError] = useState('');
@@ -169,6 +169,7 @@ export default function Register() {
               >
                 <option value="estudante">Estudante</option>
                 <option value="professor">Professor</option>
+                <option value="gestor">Gestor</option>
                 <option value="admin">Administrador</option>
               </select>
             </div>

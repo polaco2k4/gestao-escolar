@@ -8,10 +8,7 @@ const service = new CoursesService();
 export class CoursesController {
   async list(req: AuthRequest, res: Response) {
     try {
-      const filters = {
-        school_id: req.query.school_id as string,
-      };
-      const result = await service.list(filters);
+      const result = await service.list(req.user);
       return sendSuccess(res, result);
     } catch (error: any) {
       return sendError(res, error.message, error.statusCode || 500);
@@ -20,7 +17,7 @@ export class CoursesController {
 
   async getById(req: AuthRequest, res: Response) {
     try {
-      const course = await service.getById(req.params.id);
+      const course = await service.getById(req.params.id, req.user);
       return sendSuccess(res, course);
     } catch (error: any) {
       return sendError(res, error.message, error.statusCode || 500);
@@ -29,7 +26,7 @@ export class CoursesController {
 
   async create(req: AuthRequest, res: Response) {
     try {
-      const course = await service.create(req.body);
+      const course = await service.create(req.body, req.user);
       return res.status(201).json({
         success: true,
         message: 'Curso criado com sucesso',
@@ -42,7 +39,7 @@ export class CoursesController {
 
   async update(req: AuthRequest, res: Response) {
     try {
-      const course = await service.update(req.params.id, req.body);
+      const course = await service.update(req.params.id, req.body, req.user);
       return sendSuccess(res, course);
     } catch (error: any) {
       return sendError(res, error.message, error.statusCode || 500);
@@ -51,7 +48,7 @@ export class CoursesController {
 
   async delete(req: AuthRequest, res: Response) {
     try {
-      const result = await service.delete(req.params.id);
+      const result = await service.delete(req.params.id, req.user);
       return sendSuccess(res, result);
     } catch (error: any) {
       return sendError(res, error.message, error.statusCode || 500);

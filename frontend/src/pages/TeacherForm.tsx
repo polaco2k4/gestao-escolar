@@ -11,6 +11,7 @@ export default function TeacherForm() {
     first_name: '',
     last_name: '',
     email: '',
+    password: '',
     employee_number: '',
     department: '',
     specialization: '',
@@ -33,6 +34,7 @@ export default function TeacherForm() {
         first_name: data.first_name || '',
         last_name: data.last_name || '',
         email: data.email || '',
+        password: '', // Não carregamos senha ao editar
         employee_number: data.employee_number || '',
         department: data.department || '',
         specialization: data.specialization || '',
@@ -136,10 +138,35 @@ export default function TeacherForm() {
               value={formData.email}
               onChange={handleChange}
               required
-              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+              disabled={isEditing}
+              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 disabled:bg-gray-100 disabled:cursor-not-allowed"
               placeholder="professor@escola.com"
             />
+            {isEditing && (
+              <p className="mt-1 text-xs text-gray-500">O email não pode ser alterado</p>
+            )}
           </div>
+
+          {!isEditing && (
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">
+                Senha Inicial <span className="text-red-500">*</span>
+              </label>
+              <input
+                type="password"
+                name="password"
+                value={formData.password}
+                onChange={handleChange}
+                required
+                minLength={6}
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                placeholder="Mínimo 6 caracteres"
+              />
+              <p className="mt-1 text-xs text-gray-500">
+                O professor poderá alterar esta senha após o primeiro login
+              </p>
+            </div>
+          )}
 
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1">
@@ -153,6 +180,7 @@ export default function TeacherForm() {
               className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
               placeholder="Ex: FUNC-001"
             />
+            <p className="mt-1 text-xs text-gray-500">Opcional, mas deve ser único dentro da escola</p>
           </div>
 
           <div>

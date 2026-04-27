@@ -7,7 +7,7 @@ const router = Router();
 const controller = new RelatoriosController();
 
 router.use(authenticate);
-router.use(authorize('admin', 'professor'));
+router.use(authorize('admin', 'gestor', 'professor'));
 
 router.get('/students', controller.getStudentsReport);
 router.get('/attendance', controller.getAttendanceReport);

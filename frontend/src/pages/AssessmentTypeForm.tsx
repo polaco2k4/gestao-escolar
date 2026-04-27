@@ -108,7 +108,7 @@ export default function AssessmentTypeForm() {
             <input
               type="number"
               name="weight"
-              value={formData.weight}
+              value={formData.weight || ''}
               onChange={handleChange}
               min="0.1"
               max="10"
@@ -129,7 +129,7 @@ export default function AssessmentTypeForm() {
             <input
               type="number"
               name="max_score"
-              value={formData.max_score}
+              value={formData.max_score || ''}
               onChange={handleChange}
               min="1"
               max="1000"

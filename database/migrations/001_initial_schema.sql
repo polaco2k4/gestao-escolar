@@ -43,7 +43,7 @@ CREATE TABLE users (
     last_name VARCHAR(100) NOT NULL,
     phone VARCHAR(20),
     avatar_url TEXT,
-    role VARCHAR(20) NOT NULL CHECK (role IN ('admin', 'professor', 'estudante', 'encarregado')),
+    role VARCHAR(20) NOT NULL CHECK (role IN ('admin', 'gestor', 'professor', 'estudante', 'encarregado')),
     active BOOLEAN DEFAULT true,
     last_login TIMESTAMP,
     created_at TIMESTAMP DEFAULT NOW(),

@@ -1,46 +1,69 @@
 import db from '../../config/database';
 import { AppError } from '../../middleware/errorHandler';
 import { paginate, buildPaginationMeta } from '../../utils/helpers';
+import { applySchoolFilter, canAccessSchool } from '../../middleware/schoolSegregation';
+import { AuthPayload } from '../../middleware/auth';
 
 export class FinanceiroService {
   // --- Fee Types ---
-  async listFeeTypes(schoolId?: string) {
-    const query = db('fee_types');
-    if (schoolId) query.where('school_id', schoolId);
+  async listFeeTypes(user?: AuthPayload) {
+    let query = db('fee_types');
+    query = applySchoolFilter(query, user);
     return query.orderBy('name');
   }
 
-  async createFeeType(data: any) {
-    const [feeType] = await db('fee_types').insert(data).returning('*');
+  async createFeeType(data: any, user?: AuthPayload) {
+    const schoolId = user?.role === 'admin' ? data.school_id : user?.school_id;
+    if (!schoolId) throw new AppError('Escola não especificada', 400);
+    
+    const [feeType] = await db('fee_types').insert({ ...data, school_id: schoolId }).returning('*');
     return feeType;
   }
 
-  async updateFeeType(id: string, data: any) {
+  async updateFeeType(id: string, data: any, user?: AuthPayload) {
+    const existing = await db('fee_types').where({ id }).first();
+    if (!existing) throw new AppError('Tipo de propina não encontrado', 404);
+    
+    if (user && !canAccessSchool(user, existing.school_id)) {
+      throw new AppError('Sem permissão', 403);
+    }
+    
     const [updated] = await db('fee_types').where({ id }).update(data).returning('*');
     if (!updated) throw new AppError('Tipo de propina não encontrado', 404);
     return updated;
   }
 
-  async deleteFeeType(id: string) {
+  async deleteFeeType(id: string, user?: AuthPayload) {
+    const existing = await db('fee_types').where({ id }).first();
+    if (!existing) throw new AppError('Tipo de propina não encontrado', 404);
+    
+    if (user && !canAccessSchool(user, existing.school_id)) {
+      throw new AppError('Sem permissão', 403);
+    }
+    
     const deleted = await db('fee_types').where({ id }).delete();
     if (!deleted) throw new AppError('Tipo de propina não encontrado', 404);
   }
 
   // --- Student Fees ---
-  async listStudentFees(page = 1, limit = 20, filters: any = {}, guardianId?: string) {
+  async listStudentFees(page = 1, limit = 20, filters: any = {}, user?: AuthPayload, guardianId?: string) {
     const { offset } = paginate(page, limit);
-    const query = db('student_fees as sf')
+    let query = db('student_fees as sf')
       .join('students as s', 's.id', 'sf.student_id')
       .join('users as u', 'u.id', 's.user_id')
-      .join('fee_types as ft', 'ft.id', 'sf.fee_type_id')
-      .select('sf.*', 'u.first_name as student_first_name', 'u.last_name as student_last_name', 's.student_number', 'ft.name as fee_type_name');
+      .join('fee_types as ft', 'ft.id', 'sf.fee_type_id');
+    
+    query = applySchoolFilter(query, user, 's');
+    
+    query = query.select('sf.*', 'u.first_name as student_first_name', 'u.last_name as student_last_name', 's.student_number', 'ft.name as fee_type_name');
 
     if (filters.status) query.where('sf.status', filters.status);
     if (filters.academic_year_id) query.where('sf.academic_year_id', filters.academic_year_id);
     if (guardianId) query.where('s.guardian_id', guardianId);
 
-    const countQuery = db('student_fees as sf')
+    let countQuery = db('student_fees as sf')
       .join('students as s', 's.id', 'sf.student_id');
+    countQuery = applySchoolFilter(countQuery, user, 's');
     if (filters.status) countQuery.where('sf.status', filters.status);
     if (filters.academic_year_id) countQuery.where('sf.academic_year_id', filters.academic_year_id);
     if (guardianId) countQuery.where('s.guardian_id', guardianId);
@@ -59,7 +82,10 @@ export class FinanceiroService {
       .orderBy('sf.due_date', 'desc');
   }
 
-  async createStudentFee(data: any) {
+  async createStudentFee(data: any, user?: AuthPayload) {
+    const schoolId = user?.role === 'admin' ? data.school_id : user?.school_id;
+    if (!schoolId) throw new AppError('Escola não especificada', 400);
+    
     // If academic_year_id is not provided, fetch the current academic year
     if (!data.academic_year_id) {
       const currentAcademicYear = await db('academic_years')
@@ -90,6 +116,7 @@ export class FinanceiroService {
       amount: data.amount,
       due_date: data.due_date,
       status: data.status || 'pending',
+      school_id: schoolId,
     }).returning('*');
     return fee;
   }
@@ -115,25 +142,27 @@ export class FinanceiroService {
   }
 
   // --- Payments ---
-  async listPayments(page = 1, limit = 20, filters: any = {}, guardianId?: string) {
+  async listPayments(page = 1, limit = 20, filters: any = {}, user?: AuthPayload, guardianId?: string) {
     const { offset } = paginate(page, limit);
-    const query = db('payments as p')
+    let query = db('payments as p')
       .join('student_fees as sf', 'sf.id', 'p.student_fee_id')
       .join('students as s', 's.id', 'sf.student_id')
       .join('users as u', 'u.id', 's.user_id')
-      .join('fee_types as ft', 'ft.id', 'sf.fee_type_id')
-      .select('p.*', 'u.first_name as student_first_name', 'u.last_name as student_last_name', 'ft.name as fee_name');
+      .join('fee_types as ft', 'ft.id', 'sf.fee_type_id');
+    
+    query = applySchoolFilter(query, user, 'p');
+    
+    query = query.select('p.*', 'u.first_name as student_first_name', 'u.last_name as student_last_name', 'ft.name as fee_name');
 
     if (filters.student_id) query.where('p.student_id', filters.student_id);
-    if (filters.school_id) query.where('p.school_id', filters.school_id);
     if (filters.start_date) query.where('p.payment_date', '>=', filters.start_date);
     if (filters.end_date) query.where('p.payment_date', '<=', filters.end_date);
     if (guardianId) query.where('s.guardian_id', guardianId);
 
-    const countQuery = db('payments as p')
+    let countQuery = db('payments as p')
       .join('student_fees as sf', 'sf.id', 'p.student_fee_id')
       .join('students as s', 's.id', 'sf.student_id');
-    if (filters.school_id) countQuery.where('p.school_id', filters.school_id);
+    countQuery = applySchoolFilter(countQuery, user, 'p');
     if (filters.start_date) countQuery.where('p.payment_date', '>=', filters.start_date);
     if (filters.end_date) countQuery.where('p.payment_date', '<=', filters.end_date);
     if (guardianId) countQuery.where('s.guardian_id', guardianId);
@@ -193,35 +222,53 @@ export class FinanceiroService {
   }
 
   // --- Summary ---
-  async getFinancialSummary(schoolId?: string, academicYearId?: string) {
-    const baseQuery = db('student_fees as sf').where('sf.status', '!=', 'cancelled');
-    if (academicYearId) baseQuery.where('sf.academic_year_id', academicYearId);
+  async getFinancialSummary(schoolId?: string, academicYearId?: string, user?: AuthPayload) {
+    try {
+      // Se for gestor, usar sua escola automaticamente
+      const finalSchoolId = user?.role === 'gestor' ? user.school_id : schoolId;
+      
+      let baseQuery = db('student_fees as sf').where('sf.status', '!=', 'cancelled');
+      if (finalSchoolId) baseQuery.where('sf.school_id', finalSchoolId);
+      if (academicYearId) baseQuery.where('sf.academic_year_id', academicYearId);
 
-    const [totalFees] = await baseQuery.clone().sum('sf.amount as total');
-    
-    let paymentQuery = db('payments as p')
-      .join('student_fees as sf', 'sf.id', 'p.student_fee_id')
-      .sum('p.amount as total');
-    
-    if (schoolId) paymentQuery.where('p.school_id', schoolId);
-    const [totalPaid] = await paymentQuery;
+      const [totalFees] = await baseQuery.clone().sum('sf.amount as total');
+      
+      let paymentQuery = db('payments as p');
+      
+      if (finalSchoolId) paymentQuery.where('p.school_id', finalSchoolId);
+      
+      // Se academicYearId for especificado, filtrar pagamentos pelo ano acadêmico
+      if (academicYearId) {
+        paymentQuery = paymentQuery
+          .join('student_fees as sf', 'sf.id', 'p.student_fee_id')
+          .where('sf.academic_year_id', academicYearId);
+      }
+      
+      const [totalPaid] = await paymentQuery.sum('p.amount as total');
 
-    const overdueQuery = db('student_fees as sf')
-      .where('sf.status', 'pending')
-      .where('sf.due_date', '<', new Date());
-    
-    const [overdueResult] = await overdueQuery.sum('sf.amount as total');
-    const overdueAmount = Number(overdueResult?.total) || 0;
+      let overdueQuery = db('student_fees as sf')
+        .where('sf.status', 'pending')
+        .where('sf.due_date', '<', new Date());
+      
+      if (finalSchoolId) overdueQuery.where('sf.school_id', finalSchoolId);
+      if (academicYearId) overdueQuery.where('sf.academic_year_id', academicYearId);
+      
+      const [overdueResult] = await overdueQuery.sum('sf.amount as total');
+      const overdueAmount = Number(overdueResult?.total) || 0;
 
-    const totalFeesAmount = Number(totalFees?.total) || 0;
-    const totalPaidAmount = Number(totalPaid?.total) || 0;
+      const totalFeesAmount = Number(totalFees?.total) || 0;
+      const totalPaidAmount = Number(totalPaid?.total) || 0;
 
-    return {
-      total_expected: totalFeesAmount,
-      total_paid: totalPaidAmount,
-      total_pending: totalFeesAmount - totalPaidAmount,
-      total_overdue: overdueAmount,
-      payment_rate: totalFeesAmount > 0 ? (totalPaidAmount / totalFeesAmount) * 100 : 0,
-    };
+      return {
+        total_expected: totalFeesAmount,
+        total_paid: totalPaidAmount,
+        total_pending: totalFeesAmount - totalPaidAmount,
+        total_overdue: overdueAmount,
+        payment_rate: totalFeesAmount > 0 ? (totalPaidAmount / totalFeesAmount) * 100 : 0,
+      };
+    } catch (error) {
+      console.error('Erro em getFinancialSummary:', error);
+      throw new AppError('Erro ao obter resumo financeiro: ' + (error as Error).message, 500);
+    }
   }
 }

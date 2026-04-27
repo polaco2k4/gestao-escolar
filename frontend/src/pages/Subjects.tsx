@@ -41,7 +41,7 @@ export default function Subjects() {
     <div className="space-y-6">
       <div className="flex justify-between items-center">
         <h1 className="text-3xl font-bold text-gray-900">Disciplinas</h1>
-        {user?.role === 'admin' && (
+        {(user?.role === 'admin' || user?.role === 'gestor') && (
           <Link
             to="/subjects/novo"
             className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg font-medium transition-colors"

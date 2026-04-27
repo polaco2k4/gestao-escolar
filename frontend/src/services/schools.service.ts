@@ -20,6 +20,12 @@ export interface SchoolFormData {
   phone?: string;
   email?: string;
   logo_url?: string;
+  // Dados opcionais do gestor
+  gestor_email?: string;
+  gestor_password?: string;
+  gestor_first_name?: string;
+  gestor_last_name?: string;
+  gestor_phone?: string;
 }
 
 export interface SchoolStats {

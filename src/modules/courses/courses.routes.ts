@@ -10,8 +10,8 @@ router.use(authenticate);
 
 router.get('/', controller.list);
 router.get('/:id', controller.getById);
-router.post('/', authorize('admin'), controller.create);
-router.put('/:id', authorize('admin'), controller.update);
-router.delete('/:id', authorize('admin'), controller.delete);
+router.post('/', authorize('admin', 'gestor'), controller.create);
+router.put('/:id', authorize('admin', 'gestor'), controller.update);
+router.delete('/:id', authorize('admin', 'gestor'), controller.delete);
 
 export default router;

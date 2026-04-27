@@ -8,7 +8,7 @@ const service = new GuardiansService();
 export class GuardiansController {
   async list(req: AuthRequest, res: Response) {
     try {
-      const guardians = await service.list();
+      const guardians = await service.list(req.user);
       return sendSuccess(res, guardians);
     } catch (error: any) {
       return sendError(res, error.message, error.statusCode || 500);
@@ -17,7 +17,7 @@ export class GuardiansController {
 
   async getById(req: AuthRequest, res: Response) {
     try {
-      const guardian = await service.getById(req.params.id);
+      const guardian = await service.getById(req.params.id, req.user);
       return sendSuccess(res, guardian);
     } catch (error: any) {
       return sendError(res, error.message, error.statusCode || 500);
@@ -26,7 +26,7 @@ export class GuardiansController {
 
   async create(req: AuthRequest, res: Response) {
     try {
-      const guardian = await service.create(req.body, req.user?.school_id);
+      const guardian = await service.create(req.body, req.user);
       return sendSuccess(res, guardian, 'Encarregado criado', 201);
     } catch (error: any) {
       return sendError(res, error.message, error.statusCode || 500);
@@ -35,7 +35,7 @@ export class GuardiansController {
 
   async update(req: AuthRequest, res: Response) {
     try {
-      const guardian = await service.update(req.params.id, req.body);
+      const guardian = await service.update(req.params.id, req.body, req.user);
       return sendSuccess(res, guardian, 'Encarregado atualizado');
     } catch (error: any) {
       return sendError(res, error.message, error.statusCode || 500);
@@ -44,7 +44,7 @@ export class GuardiansController {
 
   async delete(req: AuthRequest, res: Response) {
     try {
-      await service.delete(req.params.id);
+      await service.delete(req.params.id, req.user);
       return sendSuccess(res, null, 'Encarregado eliminado');
     } catch (error: any) {
       return sendError(res, error.message, error.statusCode || 500);

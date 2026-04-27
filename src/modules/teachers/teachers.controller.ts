@@ -8,7 +8,7 @@ const service = new TeachersService();
 export class TeachersController {
   async list(req: AuthRequest, res: Response) {
     try {
-      const teachers = await service.list();
+      const teachers = await service.list(req.user);
       return sendSuccess(res, teachers);
     } catch (error: any) {
       return sendError(res, error.message, error.statusCode || 500);
@@ -17,7 +17,7 @@ export class TeachersController {
 
   async getById(req: AuthRequest, res: Response) {
     try {
-      const teacher = await service.getById(req.params.id);
+      const teacher = await service.getById(req.params.id, req.user);
       return sendSuccess(res, teacher);
     } catch (error: any) {
       return sendError(res, error.message, error.statusCode || 500);
@@ -26,7 +26,7 @@ export class TeachersController {
 
   async create(req: AuthRequest, res: Response) {
     try {
-      const teacher = await service.create(req.body, req.user?.school_id);
+      const teacher = await service.create(req.body, req.user);
       return sendSuccess(res, teacher, 'Professor criado', 201);
     } catch (error: any) {
       return sendError(res, error.message, error.statusCode || 500);
@@ -35,7 +35,7 @@ export class TeachersController {
 
   async update(req: AuthRequest, res: Response) {
     try {
-      const teacher = await service.update(req.params.id, req.body);
+      const teacher = await service.update(req.params.id, req.body, req.user);
       return sendSuccess(res, teacher, 'Professor atualizado');
     } catch (error: any) {
       return sendError(res, error.message, error.statusCode || 500);

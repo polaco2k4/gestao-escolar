@@ -10,7 +10,7 @@ const service = new FinanceiroService();
 export class FinanceiroController {
   async listFeeTypes(req: AuthRequest, res: Response) {
     try {
-      const feeTypes = await service.listFeeTypes(req.query.school_id as string);
+      const feeTypes = await service.listFeeTypes(req.user);
       return sendSuccess(res, feeTypes);
     } catch (error: any) {
       return sendError(res, error.message, error.statusCode || 500);
@@ -19,9 +19,7 @@ export class FinanceiroController {
 
   async createFeeType(req: AuthRequest, res: Response) {
     try {
-      const school = await db('schools').first();
-      const school_id = req.user?.school_id || school?.id;
-      const feeType = await service.createFeeType({ ...req.body, school_id });
+      const feeType = await service.createFeeType(req.body, req.user);
       return sendSuccess(res, feeType, 'Tipo de propina criado', 201);
     } catch (error: any) {
       return sendError(res, error.message, error.statusCode || 500);
@@ -30,7 +28,7 @@ export class FinanceiroController {
 
   async updateFeeType(req: AuthRequest, res: Response) {
     try {
-      const feeType = await service.updateFeeType(req.params.id, req.body);
+      const feeType = await service.updateFeeType(req.params.id, req.body, req.user);
       return sendSuccess(res, feeType, 'Tipo de propina actualizado');
     } catch (error: any) {
       return sendError(res, error.message, error.statusCode || 500);
@@ -39,7 +37,7 @@ export class FinanceiroController {
 
   async deleteFeeType(req: AuthRequest, res: Response) {
     try {
-      await service.deleteFeeType(req.params.id);
+      await service.deleteFeeType(req.params.id, req.user);
       return sendSuccess(res, null, 'Tipo de propina eliminado');
     } catch (error: any) {
       return sendError(res, error.message, error.statusCode || 500);
@@ -59,7 +57,7 @@ export class FinanceiroController {
         }
       }
       
-      const result = await service.listStudentFees(Number(page), Number(limit), filters, guardianId);
+      const result = await service.listStudentFees(Number(page), Number(limit), filters, req.user, guardianId);
       return sendSuccess(res, result);
     } catch (error: any) {
       logger.error('Erro ao listar propinas:', error);
@@ -79,7 +77,7 @@ export class FinanceiroController {
   async createStudentFee(req: AuthRequest, res: Response) {
     try {
       logger.info('Creating student fee with data:', req.body);
-      const fee = await service.createStudentFee(req.body);
+      const fee = await service.createStudentFee(req.body, req.user);
       return sendSuccess(res, fee, 'Propina atribuída', 201);
     } catch (error: any) {
       logger.error('Error creating student fee:', error);
@@ -110,7 +108,7 @@ export class FinanceiroController {
         }
       }
       
-      const result = await service.listPayments(Number(page), Number(limit), filters, guardianId);
+      const result = await service.listPayments(Number(page), Number(limit), filters, req.user, guardianId);
       return sendSuccess(res, result);
     } catch (error: any) {
       logger.error('Erro ao listar pagamentos:', error);
@@ -141,7 +139,8 @@ export class FinanceiroController {
     try {
       const summary = await service.getFinancialSummary(
         req.query.school_id as string,
-        req.query.academic_year_id as string
+        req.query.academic_year_id as string,
+        req.user
       );
       return sendSuccess(res, summary);
     } catch (error: any) {

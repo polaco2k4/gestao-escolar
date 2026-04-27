@@ -8,7 +8,7 @@ export default function SubjectForm() {
   const { id } = useParams();
   const { user } = useAuth();
   const isEditing = !!id;
-  const canEdit = user?.role === 'admin';
+  const canEdit = user?.role === 'admin' || user?.role === 'gestor';
 
   const [formData, setFormData] = useState({
     name: '',
@@ -151,7 +151,7 @@ export default function SubjectForm() {
               <input
                 type="number"
                 name="credits"
-                value={formData.credits}
+                value={formData.credits || ''}
                 onChange={handleChange}
                 min="1"
                 max="10"
