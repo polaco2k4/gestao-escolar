@@ -25,6 +25,8 @@ import Subjects from './pages/Subjects';
 import SubjectForm from './pages/SubjectForm';
 import Teachers from './pages/Teachers';
 import TeacherForm from './pages/TeacherForm';
+import Courses from './pages/Courses';
+import CourseForm from './pages/CourseForm';
 import Financeiro from './pages/Financeiro';
 import Horarios from './pages/Horarios';
 import Comunicacao from './pages/Comunicacao';
@@ -62,6 +64,9 @@ function App() {
             <Route path="escolas" element={<Escolas />} />
             <Route path="escolas/novo" element={<EscolaForm />} />
             <Route path="escolas/:id/editar" element={<EscolaForm />} />
+            <Route path="courses" element={<Courses />} />
+            <Route path="courses/novo" element={<CourseForm />} />
+            <Route path="courses/:id/editar" element={<CourseForm />} />
             <Route path="turmas" element={<Turmas />} />
             <Route path="turmas/novo" element={<TurmaForm />} />
             <Route path="turmas/:id/editar" element={<TurmaForm />} />

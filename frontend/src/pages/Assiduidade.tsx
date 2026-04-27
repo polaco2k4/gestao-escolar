@@ -1,7 +1,8 @@
 import { useState, useEffect } from 'react';
-import { Plus, Calendar, CheckCircle, XCircle, Clock, FileText, Filter, Trash2 } from 'lucide-react';
+import { Plus, Calendar, CheckCircle, XCircle, Clock, FileText, Filter, Trash2, Pencil, X } from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext';
 import RegistrarPresencaModal from '../components/RegistrarPresencaModal';
+import api from '../config/api';
 
 interface AttendanceRecord {
   id: string;
@@ -9,7 +10,7 @@ interface AttendanceRecord {
   schedule_id: string;
   date: string;
   status: 'present' | 'absent' | 'late' | 'justified';
-  notes?: string;
+  remarks?: string;
   first_name: string;
   last_name: string;
   student_number: string;
@@ -33,6 +34,8 @@ export default function Assiduidade() {
   const [loading, setLoading] = useState(true);
   const [showFilters, setShowFilters] = useState(false);
   const [showModal, setShowModal] = useState(false);
+  const [editingRecord, setEditingRecord] = useState<AttendanceRecord | null>(null);
+  const [editForm, setEditForm] = useState({ status: 'present' as AttendanceRecord['status'], remarks: '' });
   const [filters, setFilters] = useState<AttendanceFilters>({
     page: 1,
     limit: 20,
@@ -51,24 +54,10 @@ export default function Assiduidade() {
   const loadRecords = async () => {
     try {
       setLoading(true);
-      const token = localStorage.getItem('token');
-      const queryParams = new URLSearchParams();
-      
-      Object.entries(filters).forEach(([key, value]) => {
-        if (value) queryParams.append(key, value.toString());
-      });
-
-      const response = await fetch(`http://localhost:3000/api/assiduidade?${queryParams}`, {
-        headers: {
-          'Authorization': `Bearer ${token}`,
-        },
-      });
-
-      if (!response.ok) throw new Error('Erro ao carregar registos');
-      
-      const data = await response.json();
-      setRecords(data.data.records);
-      setMeta(data.data.meta);
+      const response = await api.get('/api/assiduidade', { params: filters });
+      const data = response.data.data;
+      setRecords(data.records || []);
+      setMeta(data.meta || { total: 0, page: 1, limit: 20, totalPages: 0 });
     } catch (error) {
       console.error('Erro ao carregar registos:', error);
     } finally {
@@ -78,22 +67,30 @@ export default function Assiduidade() {
 
   const handleDelete = async (id: string) => {
     if (!confirm('Tem certeza que deseja eliminar este registo?')) return;
-
     try {
-      const token = localStorage.getItem('token');
-      const response = await fetch(`http://localhost:3000/api/assiduidade/${id}`, {
-        method: 'DELETE',
-        headers: {
-          'Authorization': `Bearer ${token}`,
-        },
-      });
-
-      if (!response.ok) throw new Error('Erro ao eliminar registo');
-      
+      await api.delete(`/api/assiduidade/${id}`);
       loadRecords();
     } catch (error) {
       console.error('Erro ao eliminar registo:', error);
       alert('Erro ao eliminar registo');
+    }
+  };
+
+  const handleEditOpen = (record: AttendanceRecord) => {
+    setEditingRecord(record);
+    setEditForm({ status: record.status, remarks: record.remarks || '' });
+  };
+
+  const handleEditSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!editingRecord) return;
+    try {
+      await api.put(`/api/assiduidade/${editingRecord.id}`, editForm);
+      setEditingRecord(null);
+      loadRecords();
+    } catch (error) {
+      console.error('Erro ao actualizar registo:', error);
+      alert('Erro ao actualizar registo');
     }
   };
 
@@ -319,20 +316,27 @@ export default function Assiduidade() {
                       {getStatusBadge(record.status)}
                     </td>
                     <td className="px-6 py-4 text-sm text-gray-500">
-                      {record.notes || '-'}
+                      {record.remarks || '-'}
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
-                      <div className="flex justify-end gap-2">
-                        {(user?.role === 'admin' || user?.role === 'professor') && (
+                      {(user?.role === 'admin' || user?.role === 'professor') && (
+                        <div className="flex justify-end gap-2">
+                          <button
+                            onClick={() => handleEditOpen(record)}
+                            className="p-1 text-blue-600 hover:text-blue-800 hover:bg-blue-50 rounded"
+                            title="Editar"
+                          >
+                            <Pencil className="w-4 h-4" />
+                          </button>
                           <button
                             onClick={() => handleDelete(record.id)}
-                            className="text-red-600 hover:text-red-900"
+                            className="p-1 text-red-600 hover:text-red-800 hover:bg-red-50 rounded"
                             title="Eliminar"
                           >
                             <Trash2 className="w-4 h-4" />
                           </button>
-                        )}
-                      </div>
+                        </div>
+                      )}
                     </td>
                   </tr>
                 ))
@@ -365,6 +369,58 @@ export default function Assiduidade() {
           </div>
         )}
       </div>
+
+      {/* Modal de edição */}
+      {editingRecord && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+          <div className="bg-white rounded-lg shadow-xl max-w-sm w-full mx-4">
+            <div className="flex items-center justify-between p-5 border-b">
+              <h2 className="text-lg font-semibold text-gray-900">Editar Registo</h2>
+              <button onClick={() => setEditingRecord(null)} className="text-gray-400 hover:text-gray-600">
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+            <form onSubmit={handleEditSubmit} className="p-5 space-y-4">
+              <div>
+                <p className="text-sm text-gray-500 mb-3">
+                  <strong>{editingRecord.first_name} {editingRecord.last_name}</strong> — {editingRecord.subject_name} · {formatDate(editingRecord.date)}
+                </p>
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Estado</label>
+                <select
+                  value={editForm.status}
+                  onChange={(e) => setEditForm({ ...editForm, status: e.target.value as AttendanceRecord['status'] })}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
+                >
+                  <option value="present">Presente</option>
+                  <option value="absent">Ausente</option>
+                  <option value="late">Atrasado</option>
+                  <option value="justified">Justificado</option>
+                </select>
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Observações</label>
+                <textarea
+                  value={editForm.remarks}
+                  onChange={(e) => setEditForm({ ...editForm, remarks: e.target.value })}
+                  rows={3}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
+                  placeholder="Observações opcionais"
+                />
+              </div>
+              <div className="flex gap-3 pt-1">
+                <button type="button" onClick={() => setEditingRecord(null)} className="flex-1 px-4 py-2 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50">
+                  Cancelar
+                </button>
+                <button type="submit" className="flex-1 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700">
+                  Guardar
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
 
       <RegistrarPresencaModal
         isOpen={showModal}

@@ -20,7 +20,8 @@ import {
   Book,
   UserCheck,
   ClipboardCheck,
-  MapPin
+  MapPin,
+  Briefcase
 } from 'lucide-react';
 import { useState } from 'react';
 
@@ -46,6 +47,7 @@ export default function Layout() {
   const allNavigation = [
     { name: 'Dashboard', href: '/dashboard', icon: LayoutDashboard, roles: ['admin'] },
     { name: 'Escolas', href: '/escolas', icon: School, roles: ['admin'] },
+    { name: 'Cursos', href: '/courses', icon: Briefcase, roles: ['admin'] },
     { name: 'Turmas', href: '/turmas', icon: UsersRound, roles: ['admin', 'professor'] },
     { name: 'Matrículas', href: '/matriculas', icon: GraduationCap, roles: ['admin'] },
     { name: 'Estudantes', href: '/estudantes', icon: Users, roles: ['admin', 'professor'] },

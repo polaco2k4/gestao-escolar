@@ -1,10 +1,17 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { X } from 'lucide-react';
 
 interface Template {
   id: string;
   name: string;
   type: string;
+}
+
+interface Student {
+  id: string;
+  first_name: string;
+  last_name: string;
+  student_number: string;
 }
 
 interface SolicitarDocumentoModalProps {
@@ -16,35 +23,80 @@ interface SolicitarDocumentoModalProps {
 export default function SolicitarDocumentoModal({ isOpen, onClose, onSuccess }: SolicitarDocumentoModalProps) {
   const [loading, setLoading] = useState(false);
   const [templates, setTemplates] = useState<Template[]>([]);
+  const [studentSearch, setStudentSearch] = useState('');
+  const [studentResults, setStudentResults] = useState<Student[]>([]);
+  const [selectedStudent, setSelectedStudent] = useState<Student | null>(null);
+  const [showDropdown, setShowDropdown] = useState(false);
+  const searchTimeout = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const dropdownRef = useRef<HTMLDivElement>(null);
+
   const [formData, setFormData] = useState({
+    title: '',
     type: 'certificate',
     template_id: '',
-    student_id: '',
     notes: '',
   });
 
   useEffect(() => {
-    if (isOpen) {
-      loadTemplates();
-    }
+    if (isOpen) loadTemplates();
   }, [isOpen]);
+
+  useEffect(() => {
+    const handleClickOutside = (e: MouseEvent) => {
+      if (dropdownRef.current && !dropdownRef.current.contains(e.target as Node)) {
+        setShowDropdown(false);
+      }
+    };
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, []);
 
   const loadTemplates = async () => {
     try {
       const token = localStorage.getItem('token');
-      const response = await fetch('http://localhost:3000/api/documentos/templates', {
-        headers: {
-          'Authorization': `Bearer ${token}`,
-        },
+      const response = await fetch('/api/documentos/templates', {
+        headers: { 'Authorization': `Bearer ${token}` },
       });
-
-      if (!response.ok) throw new Error('Erro ao carregar templates');
-      
+      if (!response.ok) throw new Error();
       const data = await response.json();
       setTemplates(data.data);
-    } catch (error) {
-      console.error('Erro ao carregar templates:', error);
+    } catch {
+      console.error('Erro ao carregar templates');
     }
+  };
+
+  const searchStudents = async (query: string) => {
+    if (query.length < 2) {
+      setStudentResults([]);
+      setShowDropdown(false);
+      return;
+    }
+    try {
+      const token = localStorage.getItem('token');
+      const response = await fetch(`/api/students?search=${encodeURIComponent(query)}&limit=10`, {
+        headers: { 'Authorization': `Bearer ${token}` },
+      });
+      if (!response.ok) throw new Error();
+      const data = await response.json();
+      const list = data.data?.students ?? data.data ?? [];
+      setStudentResults(list);
+      setShowDropdown(list.length > 0);
+    } catch {
+      console.error('Erro ao pesquisar estudantes');
+    }
+  };
+
+  const handleStudentInputChange = (value: string) => {
+    setStudentSearch(value);
+    setSelectedStudent(null);
+    if (searchTimeout.current) clearTimeout(searchTimeout.current);
+    searchTimeout.current = setTimeout(() => searchStudents(value), 300);
+  };
+
+  const handleSelectStudent = (student: Student) => {
+    setSelectedStudent(student);
+    setStudentSearch(`${student.first_name} ${student.last_name} (${student.student_number})`);
+    setShowDropdown(false);
   };
 
   if (!isOpen) return null;
@@ -55,32 +107,40 @@ export default function SolicitarDocumentoModal({ isOpen, onClose, onSuccess }: 
 
     try {
       const token = localStorage.getItem('token');
-      const response = await fetch('http://localhost:3000/api/documentos', {
+      const school_id = localStorage.getItem('school_id');
+
+      const payload: any = {
+        title: formData.title,
+        type: formData.type,
+        student_id: selectedStudent?.id ?? null,
+        notes: formData.notes || null,
+        school_id,
+      };
+      if (formData.template_id) payload.template_id = formData.template_id;
+
+      const response = await fetch('/api/documentos', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
           'Authorization': `Bearer ${token}`,
         },
-        body: JSON.stringify({
-          ...formData,
-          school_id: 'default-school-id', // Você pode pegar do contexto
-        }),
+        body: JSON.stringify(payload),
       });
 
-      if (!response.ok) throw new Error('Erro ao solicitar documento');
+      if (!response.ok) {
+        const err = await response.json().catch(() => ({}));
+        throw new Error(err.message || 'Erro ao solicitar documento');
+      }
 
       alert('Documento solicitado com sucesso!');
       onSuccess();
       onClose();
-      setFormData({
-        type: 'certificate',
-        template_id: '',
-        student_id: '',
-        notes: '',
-      });
-    } catch (error) {
+      setFormData({ title: '', type: 'certificate', template_id: '', notes: '' });
+      setStudentSearch('');
+      setSelectedStudent(null);
+    } catch (error: any) {
       console.error('Erro:', error);
-      alert('Erro ao solicitar documento');
+      alert(error.message || 'Erro ao solicitar documento');
     } finally {
       setLoading(false);
     }
@@ -91,15 +151,26 @@ export default function SolicitarDocumentoModal({ isOpen, onClose, onSuccess }: 
       <div className="bg-white rounded-lg shadow-xl max-w-md w-full mx-4">
         <div className="flex items-center justify-between p-6 border-b border-gray-200">
           <h2 className="text-xl font-semibold text-gray-900">Solicitar Documento</h2>
-          <button
-            onClick={onClose}
-            className="text-gray-400 hover:text-gray-600"
-          >
+          <button onClick={onClose} className="text-gray-400 hover:text-gray-600">
             <X className="w-5 h-5" />
           </button>
         </div>
 
         <form onSubmit={handleSubmit} className="p-6 space-y-4">
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-2">
+              Título *
+            </label>
+            <input
+              type="text"
+              required
+              value={formData.title}
+              onChange={(e) => setFormData({ ...formData, title: e.target.value })}
+              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
+              placeholder="Ex: Declaração de Matrícula - João Silva"
+            />
+          </div>
+
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-2">
               Tipo de Documento *
@@ -111,9 +182,9 @@ export default function SolicitarDocumentoModal({ isOpen, onClose, onSuccess }: 
               className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
             >
               <option value="certificate">Certificado</option>
+              <option value="declaration">Declaração</option>
               <option value="transcript">Histórico Escolar</option>
-              <option value="enrollment_certificate">Declaração de Matrícula</option>
-              <option value="conduct_certificate">Atestado de Conduta</option>
+              <option value="report">Relatório</option>
               <option value="other">Outro</option>
             </select>
           </div>
@@ -136,18 +207,36 @@ export default function SolicitarDocumentoModal({ isOpen, onClose, onSuccess }: 
             </select>
           </div>
 
-          <div>
+          <div className="relative" ref={dropdownRef}>
             <label className="block text-sm font-medium text-gray-700 mb-2">
-              ID do Estudante *
+              Estudante
             </label>
             <input
               type="text"
-              required
-              value={formData.student_id}
-              onChange={(e) => setFormData({ ...formData, student_id: e.target.value })}
+              value={studentSearch}
+              onChange={(e) => handleStudentInputChange(e.target.value)}
+              onFocus={() => studentResults.length > 0 && setShowDropdown(true)}
               className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
-              placeholder="ID do estudante"
+              placeholder="Pesquisar por nome ou número..."
+              autoComplete="off"
             />
+            {showDropdown && (
+              <ul className="absolute z-10 w-full bg-white border border-gray-200 rounded-lg shadow-lg mt-1 max-h-48 overflow-y-auto">
+                {studentResults.map((student) => (
+                  <li
+                    key={student.id}
+                    onMouseDown={() => handleSelectStudent(student)}
+                    className="px-4 py-2 hover:bg-blue-50 cursor-pointer text-sm"
+                  >
+                    <span className="font-medium">{student.first_name} {student.last_name}</span>
+                    <span className="text-gray-500 ml-2">#{student.student_number}</span>
+                  </li>
+                ))}
+              </ul>
+            )}
+            {selectedStudent && (
+              <p className="text-xs text-green-600 mt-1">Estudante seleccionado</p>
+            )}
           </div>
 
           <div>

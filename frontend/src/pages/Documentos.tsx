@@ -1,7 +1,8 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { Plus, FileText, Download, Upload, Trash2, Eye, Filter, CheckCircle, Clock, XCircle } from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext';
 import SolicitarDocumentoModal from '../components/SolicitarDocumentoModal';
+import CriarTemplateModal from '../components/CriarTemplateModal';
 
 interface Document {
   id: string;
@@ -42,6 +43,10 @@ export default function Documentos() {
   const [loading, setLoading] = useState(true);
   const [showFilters, setShowFilters] = useState(false);
   const [showModal, setShowModal] = useState(false);
+  const [selectedDoc, setSelectedDoc] = useState<Document | null>(null);
+  const [uploadDocId, setUploadDocId] = useState<string | null>(null);
+  const [uploadLoading, setUploadLoading] = useState(false);
+  const fileInputRef = useRef<HTMLInputElement>(null);
   const [activeTab, setActiveTab] = useState<'documents' | 'templates'>('documents');
   const [filters, setFilters] = useState<DocumentFilters>({
     page: 1,
@@ -72,7 +77,7 @@ export default function Documentos() {
         if (value) queryParams.append(key, value.toString());
       });
 
-      const response = await fetch(`http://localhost:3000/api/documentos?${queryParams}`, {
+      const response = await fetch(`/api/documentos?${queryParams}`, {
         headers: {
           'Authorization': `Bearer ${token}`,
         },
@@ -95,7 +100,7 @@ export default function Documentos() {
       setLoading(true);
       const token = localStorage.getItem('token');
       
-      const response = await fetch('http://localhost:3000/api/documentos/templates', {
+      const response = await fetch('/api/documentos/templates', {
         headers: {
           'Authorization': `Bearer ${token}`,
         },
@@ -117,7 +122,7 @@ export default function Documentos() {
 
     try {
       const token = localStorage.getItem('token');
-      const response = await fetch(`http://localhost:3000/api/documentos/${id}`, {
+      const response = await fetch(`/api/documentos/${id}`, {
         method: 'DELETE',
         headers: {
           'Authorization': `Bearer ${token}`,
@@ -138,7 +143,7 @@ export default function Documentos() {
 
     try {
       const token = localStorage.getItem('token');
-      const response = await fetch(`http://localhost:3000/api/documentos/templates/${id}`, {
+      const response = await fetch(`/api/documentos/templates/${id}`, {
         method: 'DELETE',
         headers: {
           'Authorization': `Bearer ${token}`,
@@ -151,6 +156,40 @@ export default function Documentos() {
     } catch (error) {
       console.error('Erro ao eliminar template:', error);
       alert('Erro ao eliminar template');
+    }
+  };
+
+  const handleUploadClick = (docId: string) => {
+    setUploadDocId(docId);
+    fileInputRef.current?.click();
+  };
+
+  const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file || !uploadDocId) return;
+
+    setUploadLoading(true);
+    try {
+      const token = localStorage.getItem('token');
+      const formData = new FormData();
+      formData.append('file', file);
+
+      const response = await fetch(`/api/documentos/${uploadDocId}/upload`, {
+        method: 'POST',
+        headers: { 'Authorization': `Bearer ${token}` },
+        body: formData,
+      });
+
+      if (!response.ok) throw new Error('Erro ao fazer upload');
+      alert('Ficheiro carregado com sucesso!');
+      loadDocuments();
+    } catch (error) {
+      console.error('Erro upload:', error);
+      alert('Erro ao carregar ficheiro');
+    } finally {
+      setUploadLoading(false);
+      setUploadDocId(null);
+      if (fileInputRef.current) fileInputRef.current.value = '';
     }
   };
 
@@ -411,7 +450,7 @@ export default function Documentos() {
                       <td className="px-6 py-4 whitespace-nowrap text-sm">
                         {doc.file_url ? (
                           <a
-                            href={`http://localhost:3000${doc.file_url}`}
+                            href={`${doc.file_url}`}
                             target="_blank"
                             rel="noopener noreferrer"
                             className="text-blue-600 hover:text-blue-800 flex items-center gap-1"
@@ -426,6 +465,7 @@ export default function Documentos() {
                       <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
                         <div className="flex justify-end gap-2">
                           <button
+                            onClick={() => setSelectedDoc(doc)}
                             className="text-blue-600 hover:text-blue-900"
                             title="Ver detalhes"
                           >
@@ -434,7 +474,9 @@ export default function Documentos() {
                           {user?.role === 'admin' && (
                             <>
                               <button
-                                className="text-green-600 hover:text-green-900"
+                                onClick={() => handleUploadClick(doc.id)}
+                                disabled={uploadLoading}
+                                className="text-green-600 hover:text-green-900 disabled:opacity-50"
                                 title="Upload ficheiro"
                               >
                                 <Upload className="w-4 h-4" />
@@ -568,11 +610,80 @@ export default function Documentos() {
         </div>
       )}
 
+      {/* Hidden file input for upload */}
+      <input
+        ref={fileInputRef}
+        type="file"
+        className="hidden"
+        onChange={handleFileChange}
+        accept=".pdf,.doc,.docx,.png,.jpg,.jpeg"
+      />
+
+      {/* Document details modal */}
+      {selectedDoc && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+          <div className="bg-white rounded-lg shadow-xl max-w-lg w-full mx-4">
+            <div className="flex items-center justify-between p-6 border-b border-gray-200">
+              <h2 className="text-xl font-semibold text-gray-900">Detalhes do Documento</h2>
+              <button onClick={() => setSelectedDoc(null)} className="text-gray-400 hover:text-gray-600">
+                <XCircle className="w-5 h-5" />
+              </button>
+            </div>
+            <div className="p-6 space-y-3">
+              {[
+                { label: 'Estudante', value: `${selectedDoc.first_name ?? ''} ${selectedDoc.last_name ?? ''}`.trim() || '-' },
+                { label: 'Template', value: selectedDoc.template_name || '-' },
+                { label: 'Tipo', value: selectedDoc.type },
+                { label: 'Estado', value: getStatusBadge(selectedDoc.status) },
+                { label: 'Data Solicitação', value: formatDate(selectedDoc.created_at) },
+                { label: 'Data Geração', value: formatDate(selectedDoc.generated_at) },
+                { label: 'Data Entrega', value: formatDate(selectedDoc.delivered_at) },
+                { label: 'Observações', value: selectedDoc.notes || '-' },
+              ].map(({ label, value }) => (
+                <div key={label} className="flex justify-between text-sm">
+                  <span className="text-gray-500 font-medium w-36 shrink-0">{label}</span>
+                  <span className="text-gray-900 text-right">{value}</span>
+                </div>
+              ))}
+              {selectedDoc.file_url && (
+                <div className="flex justify-between text-sm">
+                  <span className="text-gray-500 font-medium w-36 shrink-0">Ficheiro</span>
+                  <a
+                    href={selectedDoc.file_url}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="text-blue-600 hover:text-blue-800 flex items-center gap-1"
+                  >
+                    <Download className="w-4 h-4" />
+                    Download
+                  </a>
+                </div>
+              )}
+            </div>
+            <div className="px-6 pb-6 flex justify-end">
+              <button
+                onClick={() => setSelectedDoc(null)}
+                className="px-4 py-2 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200"
+              >
+                Fechar
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
       {activeTab === 'documents' && (
         <SolicitarDocumentoModal
           isOpen={showModal}
           onClose={() => setShowModal(false)}
           onSuccess={loadDocuments}
+        />
+      )}
+      {activeTab === 'templates' && (
+        <CriarTemplateModal
+          isOpen={showModal}
+          onClose={() => setShowModal(false)}
+          onSuccess={loadTemplates}
         />
       )}
     </div>

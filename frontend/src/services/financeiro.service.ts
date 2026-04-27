@@ -81,7 +81,11 @@ class FinanceiroService {
     return response.data.data;
   }
 
-  async bulkCreateStudentFees(data: { student_ids: string[]; fee_type_id: string; due_date: string }): Promise<StudentFee[]> {
+  async bulkCreateStudentFees(data: { 
+    fee_type_id: string; 
+    academic_year_id: string; 
+    class_id: string;
+  }): Promise<StudentFee[]> {
     const response = await api.post('/api/financeiro/student-fees/bulk', data);
     return response.data.data;
   }
