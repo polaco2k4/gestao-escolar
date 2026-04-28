@@ -10,12 +10,14 @@ interface User {
   role: string;
   school_id?: string;
   school_name?: string;
+  school_logo_url?: string;
 }
 
 interface AuthContextType {
   user: User | null;
   login: (email: string, password: string) => Promise<void>;
   logout: () => void;
+  refreshUser: () => Promise<void>;
   isLoading: boolean;
 }
 
@@ -76,7 +78,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   };
 
   return (
-    <AuthContext.Provider value={{ user, login, logout, isLoading }}>
+    <AuthContext.Provider value={{ user, login, logout, refreshUser: loadUserProfile, isLoading }}>
       {children}
     </AuthContext.Provider>
   );

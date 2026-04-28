@@ -26,7 +26,8 @@ import {
   Key,
   CreditCard,
   ChevronDown,
-  AlertCircle
+  AlertCircle,
+  Settings
 } from 'lucide-react';
 import { useState } from 'react';
 import { useAcademicYearStatus } from '../hooks/useAcademicYearStatus';
@@ -110,6 +111,12 @@ export default function Layout() {
         { name: 'Relatórios', href: '/relatorios', icon: BarChart, roles: ['admin', 'gestor', 'professor'] },
       ],
     },
+    {
+      label: 'Sistema',
+      items: [
+        { name: 'Configurações', href: '/configuracoes', icon: Settings, roles: ['admin', 'gestor'] },
+      ],
+    },
   ];
 
   // Filtrar navegação baseado na role do usuário
@@ -141,10 +148,20 @@ export default function Layout() {
         ${isSidebarOpen ? 'translate-x-0' : '-translate-x-full'}
         lg:translate-x-0
       `}>
-        <div className="flex items-center justify-between h-16 px-6 border-b border-gray-200">
-          <div className="flex items-center gap-2">
-            <GraduationCap className="w-8 h-8 text-blue-600" />
-            <span className="text-xl font-bold text-gray-900">Gestão Escolar</span>
+        <div className={`flex items-center justify-between px-4 border-b border-gray-200 ${user?.school_logo_url ? 'h-28' : 'h-16 px-6'}`}>
+          <div className="flex flex-1 items-center justify-center">
+            {user?.school_logo_url ? (
+              <img
+                src={user.school_logo_url}
+                alt="Logotipo"
+                className="h-24 max-w-[210px] object-contain"
+              />
+            ) : (
+              <>
+                <GraduationCap className="w-8 h-8 text-blue-600" />
+                <span className="text-xl font-bold text-gray-900 ml-2">Gestão Escolar</span>
+              </>
+            )}
           </div>
           <button
             onClick={() => setIsSidebarOpen(false)}
@@ -201,26 +218,6 @@ export default function Layout() {
           })}
         </nav>
 
-        <div className="border-t border-gray-200 p-4">
-          <div className="flex items-center gap-3 px-4 py-3 mb-2">
-            <div className="w-10 h-10 bg-blue-600 rounded-full flex items-center justify-center text-white font-semibold">
-              {user?.first_name?.[0]}{user?.last_name?.[0]}
-            </div>
-            <div className="flex-1 min-w-0">
-              <p className="text-sm font-medium text-gray-900 truncate">
-                {user?.first_name} {user?.last_name}
-              </p>
-              <p className="text-xs text-gray-500 truncate">{user?.email}</p>
-            </div>
-          </div>
-          <button
-            onClick={logout}
-            className="flex items-center gap-3 w-full px-4 py-3 text-red-600 hover:bg-red-50 rounded-lg transition"
-          >
-            <LogOut className="w-5 h-5" />
-            <span>Sair</span>
-          </button>
-        </div>
       </aside>
 
       {/* Main content */}
@@ -264,9 +261,25 @@ export default function Layout() {
               </button>
             )}
             
-            <span className="text-sm text-gray-600">
-              <span className="font-medium capitalize">{user?.role}</span>
-            </span>
+            <div className="flex items-center gap-3 border-l border-gray-200 pl-4">
+              <div className="w-9 h-9 bg-blue-600 rounded-full flex items-center justify-center text-white font-semibold text-sm flex-shrink-0">
+                {user?.first_name?.[0]}{user?.last_name?.[0]}
+              </div>
+              <div className="hidden md:block text-right">
+                <p className="text-sm font-medium text-gray-900 leading-tight">
+                  {user?.first_name} {user?.last_name}
+                </p>
+                <p className="text-xs text-gray-500">{user?.email}</p>
+              </div>
+              <button
+                onClick={logout}
+                className="flex items-center gap-1.5 px-3 py-1.5 text-red-600 hover:bg-red-50 rounded-lg transition text-sm"
+                title="Sair"
+              >
+                <LogOut className="w-4 h-4" />
+                <span className="hidden sm:inline">Sair</span>
+              </button>
+            </div>
           </div>
         </header>
 

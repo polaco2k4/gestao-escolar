@@ -53,7 +53,8 @@ export class AuthService {
       .where({ 'u.email': email, 'u.active': true })
       .select(
         'u.*',
-        's.name as school_name'
+        's.name as school_name',
+        's.logo_url as school_logo_url'
       )
       .first();
       
@@ -104,15 +105,16 @@ export class AuthService {
       .leftJoin('schools as s', 's.id', 'u.school_id')
       .where({ 'u.id': userId })
       .select(
-        'u.id', 
-        'u.email', 
-        'u.first_name', 
-        'u.last_name', 
-        'u.role', 
-        'u.phone', 
-        'u.avatar_url', 
-        'u.school_id', 
+        'u.id',
+        'u.email',
+        'u.first_name',
+        'u.last_name',
+        'u.role',
+        'u.phone',
+        'u.avatar_url',
+        'u.school_id',
         's.name as school_name',
+        's.logo_url as school_logo_url',
         'u.created_at'
       )
       .first();

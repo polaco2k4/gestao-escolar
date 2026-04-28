@@ -63,4 +63,17 @@ export class SchoolsController {
       return sendError(res, error.message, error.statusCode || 500);
     }
   }
+
+  async uploadLogo(req: AuthRequest, res: Response) {
+    try {
+      if (!req.file) {
+        return sendError(res, 'Nenhum ficheiro enviado', 400);
+      }
+      const logoUrl = `/uploads/${req.file.filename}`;
+      const school = await service.update(req.params.id, { logo_url: logoUrl });
+      return sendSuccess(res, school, 'Logotipo actualizado com sucesso');
+    } catch (error: any) {
+      return sendError(res, error.message, error.statusCode || 500);
+    }
+  }
 }

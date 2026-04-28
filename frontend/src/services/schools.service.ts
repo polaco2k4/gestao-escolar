@@ -45,12 +45,12 @@ class SchoolsService {
   }
 
   async getById(id: string): Promise<School> {
-    const response = await api.get(`/api/schools/${id}`);
+    const response = await api.get(`/schools/${id}`);
     return response.data.data;
   }
 
   async getStats(id: string): Promise<SchoolStats> {
-    const response = await api.get(`/api/schools/${id}/stats`);
+    const response = await api.get(`/schools/${id}/stats`);
     return response.data.data;
   }
 
@@ -60,12 +60,21 @@ class SchoolsService {
   }
 
   async update(id: string, data: Partial<SchoolFormData>): Promise<School> {
-    const response = await api.put(`/api/schools/${id}`, data);
+    const response = await api.put(`/schools/${id}`, data);
     return response.data.data;
   }
 
   async delete(id: string): Promise<void> {
-    await api.delete(`/api/schools/${id}`);
+    await api.delete(`/schools/${id}`);
+  }
+
+  async uploadLogo(id: string, file: File): Promise<School> {
+    const formData = new FormData();
+    formData.append('logo', file);
+    const response = await api.post(`/schools/${id}/logo`, formData, {
+      headers: { 'Content-Type': 'multipart/form-data' },
+    });
+    return response.data.data;
   }
 }
 

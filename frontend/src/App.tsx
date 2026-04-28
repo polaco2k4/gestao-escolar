@@ -45,6 +45,7 @@ import LicencaPlanos from './pages/LicencaPlanos';
 import AnosLectivos from './pages/AnosLectivos';
 import AnoLectivoForm from './pages/AnoLectivoForm';
 import Relatorios from './pages/Relatorios';
+import Configuracoes from './pages/Configuracoes';
 
 function App() {
   return (
@@ -113,6 +114,7 @@ function App() {
             <Route path="encarregados/novo" element={<EncarregadoForm />} />
             <Route path="encarregados/:id/editar" element={<EncarregadoForm />} />
             <Route path="relatorios" element={<Relatorios />} />
+            <Route path="configuracoes" element={<RoleProtectedRoute allowedRoles={['admin', 'gestor']}><Configuracoes /></RoleProtectedRoute>} />
             <Route index element={<Navigate to="/dashboard" replace />} />
           </Route>
           <Route path="/" element={<Navigate to="/dashboard" replace />} />
