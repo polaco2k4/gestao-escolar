@@ -100,7 +100,7 @@ export default function RegistrarPresencaModal({ isOpen, onClose, onSuccess }: R
     e.preventDefault();
     setLoading(true);
     try {
-      await api.post('/api/assiduidade', formData);
+      await api.post('/assiduidade', formData);
       onSuccess();
       handleClose();
     } catch (error) {

@@ -103,12 +103,12 @@ export interface AssessmentListResponse {
 
 class AvaliacoesService {
   async list(filters: AssessmentFilters = {}): Promise<AssessmentListResponse> {
-    const response = await api.get('/api/avaliacoes', { params: filters });
+    const response = await api.get('/avaliacoes', { params: filters });
     return response.data.data;
   }
 
   async listMyAssessments(filters: AssessmentFilters = {}): Promise<AssessmentListResponse> {
-    const response = await api.get('/api/avaliacoes/my-assessments', { params: filters });
+    const response = await api.get('/avaliacoes/my-assessments', { params: filters });
     return response.data.data;
   }
 
@@ -118,7 +118,7 @@ class AvaliacoesService {
   }
 
   async create(data: AssessmentFormData): Promise<Assessment> {
-    const response = await api.post('/api/avaliacoes', data);
+    const response = await api.post('/avaliacoes', data);
     return response.data.data;
   }
 
@@ -147,12 +147,12 @@ class AvaliacoesService {
   }
 
   async listGradeSheets(filters: { class_id?: string; status?: string } = {}): Promise<GradeSheet[]> {
-    const response = await api.get('/api/avaliacoes/sheets/list', { params: filters });
+    const response = await api.get('/avaliacoes/sheets/list', { params: filters });
     return response.data.data;
   }
 
   async createGradeSheet(data: CreateGradeSheetDTO): Promise<GradeSheet> {
-    const response = await api.post('/api/avaliacoes/sheets', data);
+    const response = await api.post('/avaliacoes/sheets', data);
     return response.data.data;
   }
 

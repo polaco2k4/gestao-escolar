@@ -56,7 +56,7 @@ export class HorariosController {
 
   async listClasses(req: AuthRequest, res: Response) {
     try {
-      const classes = await service.listClasses(req.query);
+      const classes = await service.listClasses(req.query, req.user);
       return sendSuccess(res, classes);
     } catch (error: any) {
       return sendError(res, error.message, error.statusCode || 500);
@@ -92,7 +92,7 @@ export class HorariosController {
 
   async listSubjects(req: AuthRequest, res: Response) {
     try {
-      const subjects = await service.listSubjects(req.query);
+      const subjects = await service.listSubjects(req.query, req.user);
       return sendSuccess(res, subjects);
     } catch (error: any) {
       return sendError(res, error.message, error.statusCode || 500);

@@ -42,6 +42,9 @@ import Licencas from './pages/Licencas';
 import LicencaForm from './pages/LicencaForm';
 import LicencaUso from './pages/LicencaUso';
 import LicencaPlanos from './pages/LicencaPlanos';
+import AnosLectivos from './pages/AnosLectivos';
+import AnoLectivoForm from './pages/AnoLectivoForm';
+import Relatorios from './pages/Relatorios';
 
 function App() {
   return (
@@ -89,6 +92,9 @@ function App() {
             <Route path="teachers" element={<Teachers />} />
             <Route path="teachers/novo" element={<TeacherForm />} />
             <Route path="teachers/:id/editar" element={<TeacherForm />} />
+            <Route path="anos-lectivos" element={<RoleProtectedRoute allowedRoles={['admin', 'gestor']}><AnosLectivos /></RoleProtectedRoute>} />
+            <Route path="anos-lectivos/novo" element={<RoleProtectedRoute allowedRoles={['admin', 'gestor']}><AnoLectivoForm /></RoleProtectedRoute>} />
+            <Route path="anos-lectivos/:id/editar" element={<RoleProtectedRoute allowedRoles={['admin', 'gestor']}><AnoLectivoForm /></RoleProtectedRoute>} />
             <Route path="assessment-types" element={<AssessmentTypes />} />
             <Route path="assessment-types/novo" element={<AssessmentTypeForm />} />
             <Route path="assessment-types/:id/editar" element={<AssessmentTypeForm />} />
@@ -106,7 +112,7 @@ function App() {
             <Route path="encarregados" element={<Encarregados />} />
             <Route path="encarregados/novo" element={<EncarregadoForm />} />
             <Route path="encarregados/:id/editar" element={<EncarregadoForm />} />
-            <Route path="relatorios" element={<div className="text-center py-12"><h2 className="text-2xl font-bold text-gray-900">Relatórios</h2><p className="text-gray-600 mt-2">Em desenvolvimento</p></div>} />
+            <Route path="relatorios" element={<Relatorios />} />
             <Route index element={<Navigate to="/dashboard" replace />} />
           </Route>
           <Route path="/" element={<Navigate to="/dashboard" replace />} />

@@ -63,7 +63,7 @@ export interface StudentListResponse {
 
 class StudentsService {
   async list(filters: StudentFilters = {}): Promise<StudentListResponse> {
-    const response = await api.get('/api/students', { params: filters });
+    const response = await api.get('/students', { params: filters });
     return response.data.data;
   }
 
@@ -73,7 +73,7 @@ class StudentsService {
   }
 
   async create(data: StudentFormData): Promise<Student> {
-    const response = await api.post('/api/students', data);
+    const response = await api.post('/students', data);
     return response.data.data;
   }
 

@@ -3,6 +3,7 @@ import api from '../config/api';
 export interface Schedule {
   id: string;
   school_id: string;
+  academic_year_id: string;
   class_id: string;
   subject_id: string;
   teacher_id: string;
@@ -57,7 +58,7 @@ export interface Room {
 
 class HorariosService {
   async listSchedules(filters?: { class_id?: string; teacher_id?: string }): Promise<Schedule[]> {
-    const response = await api.get('/api/horarios/schedules', { params: filters });
+    const response = await api.get('/horarios/schedules', { params: filters });
     const data = response.data.data;
     return Array.isArray(data) ? data : (data?.schedules || []);
   }
@@ -68,7 +69,7 @@ class HorariosService {
   }
 
   async createSchedule(data: Partial<Schedule>): Promise<Schedule> {
-    const response = await api.post('/api/horarios/schedules', data);
+    const response = await api.post('/horarios/schedules', data);
     return response.data.data;
   }
 
@@ -82,7 +83,7 @@ class HorariosService {
   }
 
   async listClasses(filters?: { academic_year_id?: string }): Promise<Class[]> {
-    const response = await api.get('/api/horarios/classes', { params: filters });
+    const response = await api.get('/horarios/classes', { params: filters });
     const data = response.data.data;
     return Array.isArray(data) ? data : (data?.classes || []);
   }
@@ -93,7 +94,7 @@ class HorariosService {
   }
 
   async createClass(data: Partial<Class>): Promise<Class> {
-    const response = await api.post('/api/horarios/classes', data);
+    const response = await api.post('/horarios/classes', data);
     return response.data.data;
   }
 
@@ -103,13 +104,13 @@ class HorariosService {
   }
 
   async listSubjects(): Promise<Subject[]> {
-    const response = await api.get('/api/horarios/subjects');
+    const response = await api.get('/horarios/subjects');
     const data = response.data.data;
     return Array.isArray(data) ? data : (data?.subjects || []);
   }
 
   async createSubject(data: Partial<Subject>): Promise<Subject> {
-    const response = await api.post('/api/horarios/subjects', data);
+    const response = await api.post('/horarios/subjects', data);
     return response.data.data;
   }
 
@@ -119,13 +120,13 @@ class HorariosService {
   }
 
   async listRooms(): Promise<Room[]> {
-    const response = await api.get('/api/horarios/rooms');
+    const response = await api.get('/horarios/rooms');
     const data = response.data.data;
     return Array.isArray(data) ? data : (data?.rooms || []);
   }
 
   async createRoom(data: Partial<Room>): Promise<Room> {
-    const response = await api.post('/api/horarios/rooms', data);
+    const response = await api.post('/horarios/rooms', data);
     return response.data.data;
   }
 

@@ -42,7 +42,7 @@ export function SchoolField({ value, onChange, required = true, error }: SchoolF
 
   const loadSchools = async () => {
     try {
-      const response = await api.get('/api/schools');
+      const response = await api.get('/schools');
       let schoolsData = response.data.data || response.data;
       
       // Se schoolsData for um objeto com propriedade schools, extrair o array

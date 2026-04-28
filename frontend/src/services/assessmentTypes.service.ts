@@ -11,7 +11,7 @@ export interface AssessmentType {
 
 class AssessmentTypesService {
   async list(): Promise<AssessmentType[]> {
-    const response = await api.get('/api/assessment-types');
+    const response = await api.get('/assessment-types');
     return response.data.data;
   }
 
@@ -21,7 +21,7 @@ class AssessmentTypesService {
   }
 
   async create(data: Omit<AssessmentType, 'id' | 'school_id' | 'created_at'>): Promise<AssessmentType> {
-    const response = await api.post('/api/assessment-types', data);
+    const response = await api.post('/assessment-types', data);
     return response.data.data;
   }
 

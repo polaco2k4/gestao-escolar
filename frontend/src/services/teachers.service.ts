@@ -17,7 +17,7 @@ export interface Teacher {
 
 class TeachersService {
   async list(): Promise<Teacher[]> {
-    const response = await api.get('/api/teachers');
+    const response = await api.get('/teachers');
     return response.data.data;
   }
 
@@ -27,7 +27,7 @@ class TeachersService {
   }
 
   async create(data: Omit<Teacher, 'id' | 'user_id' | 'school_id' | 'created_at' | 'updated_at'>): Promise<Teacher> {
-    const response = await api.post('/api/teachers', data);
+    const response = await api.post('/teachers', data);
     return response.data.data;
   }
 

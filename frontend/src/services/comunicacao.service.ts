@@ -43,7 +43,7 @@ export interface SendMessageData {
 
 class ComunicacaoService {
   async listMessages(page = 1, limit = 20): Promise<{ messages: Message[]; meta: any }> {
-    const response = await api.get('/api/comunicacao/messages', { params: { page, limit } });
+    const response = await api.get('/comunicacao/messages', { params: { page, limit } });
     return response.data.data;
   }
 
@@ -53,7 +53,7 @@ class ComunicacaoService {
   }
 
   async sendMessage(data: SendMessageData): Promise<Message> {
-    const response = await api.post('/api/comunicacao/messages', data);
+    const response = await api.post('/comunicacao/messages', data);
     return response.data.data;
   }
 
@@ -62,7 +62,7 @@ class ComunicacaoService {
   }
 
   async listNotifications(page = 1, limit = 20): Promise<{ notifications: Notification[]; unread_count: number; meta: any }> {
-    const response = await api.get('/api/comunicacao/notifications', { params: { page, limit } });
+    const response = await api.get('/comunicacao/notifications', { params: { page, limit } });
     return response.data.data;
   }
 
@@ -72,7 +72,7 @@ class ComunicacaoService {
   }
 
   async markAllAsRead(): Promise<void> {
-    await api.put('/api/comunicacao/notifications/read-all');
+    await api.put('/comunicacao/notifications/read-all');
   }
 }
 

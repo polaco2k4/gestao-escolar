@@ -29,7 +29,7 @@ export interface ClassFormData {
 
 class ClassesService {
   async list(): Promise<Class[]> {
-    const response = await api.get('/api/classes');
+    const response = await api.get('/classes');
     return response.data.data?.classes || [];
   }
 
@@ -44,7 +44,7 @@ class ClassesService {
   }
 
   async create(data: ClassFormData): Promise<Class> {
-    const response = await api.post('/api/classes', data);
+    const response = await api.post('/classes', data);
     return response.data.data;
   }
 

@@ -50,7 +50,7 @@ export interface EnrollmentListResponse {
 
 class MatriculasService {
   async list(filters: EnrollmentFilters = {}): Promise<EnrollmentListResponse> {
-    const response = await api.get('/api/matriculas', { params: filters });
+    const response = await api.get('/matriculas', { params: filters });
     return response.data.data;
   }
 
@@ -60,7 +60,7 @@ class MatriculasService {
   }
 
   async create(data: EnrollmentFormData): Promise<Enrollment> {
-    const response = await api.post('/api/matriculas', data);
+    const response = await api.post('/matriculas', data);
     return response.data.data;
   }
 

@@ -47,12 +47,12 @@ export interface FinancialSummary {
 
 class FinanceiroService {
   async listFeeTypes(): Promise<FeeType[]> {
-    const response = await api.get('/api/financeiro/fee-types');
+    const response = await api.get('/financeiro/fee-types');
     return response.data.data || [];
   }
 
   async createFeeType(data: Partial<FeeType>): Promise<FeeType> {
-    const response = await api.post('/api/financeiro/fee-types', data);
+    const response = await api.post('/financeiro/fee-types', data);
     return response.data.data;
   }
 
@@ -66,7 +66,7 @@ class FinanceiroService {
   }
 
   async listStudentFees(filters?: { student_id?: string; status?: string }): Promise<StudentFee[]> {
-    const response = await api.get('/api/financeiro/student-fees', { params: filters });
+    const response = await api.get('/financeiro/student-fees', { params: filters });
     const data = response.data.data;
     return Array.isArray(data) ? data : (data?.fees || []);
   }
@@ -77,7 +77,7 @@ class FinanceiroService {
   }
 
   async createStudentFee(data: Partial<StudentFee>): Promise<StudentFee> {
-    const response = await api.post('/api/financeiro/student-fees', data);
+    const response = await api.post('/financeiro/student-fees', data);
     return response.data.data;
   }
 
@@ -86,12 +86,12 @@ class FinanceiroService {
     academic_year_id: string; 
     class_id: string;
   }): Promise<StudentFee[]> {
-    const response = await api.post('/api/financeiro/student-fees/bulk', data);
+    const response = await api.post('/financeiro/student-fees/bulk', data);
     return response.data.data;
   }
 
   async listPayments(filters?: { student_id?: string; school_id?: string; start_date?: string; end_date?: string }): Promise<Payment[]> {
-    const response = await api.get('/api/financeiro/payments', { params: filters });
+    const response = await api.get('/financeiro/payments', { params: filters });
     const data = response.data.data;
     return Array.isArray(data) ? data : (data?.payments || []);
   }
@@ -102,12 +102,12 @@ class FinanceiroService {
   }
 
   async createPayment(data: Partial<Payment>): Promise<Payment> {
-    const response = await api.post('/api/financeiro/payments', data);
+    const response = await api.post('/financeiro/payments', data);
     return response.data.data;
   }
 
   async getFinancialSummary(filters?: { school_id?: string; start_date?: string; end_date?: string }): Promise<FinancialSummary> {
-    const response = await api.get('/api/financeiro/summary', { params: filters });
+    const response = await api.get('/financeiro/summary', { params: filters });
     return response.data.data;
   }
 }

@@ -22,7 +22,7 @@ export interface CourseFormData {
 
 class CoursesService {
   async list(filters?: { school_id?: string }): Promise<Course[]> {
-    const response = await api.get('/api/courses', { params: filters });
+    const response = await api.get('/courses', { params: filters });
     return response.data.data?.courses || [];
   }
 
@@ -32,7 +32,7 @@ class CoursesService {
   }
 
   async create(data: CourseFormData): Promise<Course> {
-    const response = await api.post('/api/courses', data);
+    const response = await api.post('/courses', data);
     return response.data.data;
   }
 

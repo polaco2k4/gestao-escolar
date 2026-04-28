@@ -2,16 +2,198 @@ import db from '../../config/database';
 import { applySchoolFilter, canAccessSchool } from '../../middleware/schoolSegregation';
 import { AuthPayload } from '../../middleware/auth';
 
+interface CustomReport {
+  id?: string;
+  school_id?: string;
+  name: string;
+  description?: string;
+  report_type: string;
+  filters?: any;
+  columns?: string[];
+  sort_by?: string;
+  sort_order?: 'asc' | 'desc';
+  created_by?: string;
+  is_public?: boolean;
+}
+
 export class RelatoriosService {
+  // ==================== CRUD de Relatórios Personalizados ====================
+  
+  async createCustomReport(data: CustomReport, user: AuthPayload) {
+    if (!user.school_id && user.role !== 'admin') {
+      throw { message: 'Usuário não está associado a nenhuma escola', statusCode: 403 };
+    }
+
+    const reportData = {
+      ...data,
+      school_id: user.role === 'admin' && data.school_id ? data.school_id : user.school_id,
+      created_by: user.id,
+      filters: JSON.stringify(data.filters || {}),
+      columns: JSON.stringify(data.columns || [])
+    };
+
+    const [report] = await db('custom_reports').insert(reportData).returning('*');
+    return report;
+  }
+
+  async getAllCustomReports(user: AuthPayload) {
+    let query = db('custom_reports as cr')
+      .leftJoin('users as u', 'u.id', 'cr.created_by')
+      .leftJoin('schools as s', 's.id', 'cr.school_id')
+      .select(
+        'cr.*',
+        'u.first_name as creator_first_name',
+        'u.last_name as creator_last_name',
+        's.name as school_name'
+      );
+
+    query = applySchoolFilter(query, user, 'cr');
+
+    const reports = await query.orderBy('cr.created_at', 'desc');
+    
+    return reports.map(report => ({
+      ...report,
+      filters: typeof report.filters === 'string' ? JSON.parse(report.filters) : report.filters,
+      columns: typeof report.columns === 'string' ? JSON.parse(report.columns) : report.columns
+    }));
+  }
+
+  async getCustomReportById(id: string, user: AuthPayload) {
+    const report = await db('custom_reports')
+      .where('id', id)
+      .first();
+
+    if (!report) {
+      throw { message: 'Relatório não encontrado', statusCode: 404 };
+    }
+
+    if (!canAccessSchool(user, report.school_id)) {
+      throw { message: 'Acesso negado a este relatório', statusCode: 403 };
+    }
+
+    return {
+      ...report,
+      filters: typeof report.filters === 'string' ? JSON.parse(report.filters) : report.filters,
+      columns: typeof report.columns === 'string' ? JSON.parse(report.columns) : report.columns
+    };
+  }
+
+  async updateCustomReport(id: string, data: Partial<CustomReport>, user: AuthPayload) {
+    const existing = await db('custom_reports').where('id', id).first();
+
+    if (!existing) {
+      throw { message: 'Relatório não encontrado', statusCode: 404 };
+    }
+
+    if (!canAccessSchool(user, existing.school_id)) {
+      throw { message: 'Acesso negado a este relatório', statusCode: 403 };
+    }
+
+    if (existing.created_by !== user.id && user.role !== 'admin') {
+      throw { message: 'Apenas o criador ou admin pode editar este relatório', statusCode: 403 };
+    }
+
+    const updateData: any = { ...data };
+    if (data.filters) updateData.filters = JSON.stringify(data.filters);
+    if (data.columns) updateData.columns = JSON.stringify(data.columns);
+
+    const [updated] = await db('custom_reports')
+      .where('id', id)
+      .update(updateData)
+      .returning('*');
+
+    return {
+      ...updated,
+      filters: typeof updated.filters === 'string' ? JSON.parse(updated.filters) : updated.filters,
+      columns: typeof updated.columns === 'string' ? JSON.parse(updated.columns) : updated.columns
+    };
+  }
+
+  async deleteCustomReport(id: string, user: AuthPayload) {
+    const existing = await db('custom_reports').where('id', id).first();
+
+    if (!existing) {
+      throw { message: 'Relatório não encontrado', statusCode: 404 };
+    }
+
+    if (!canAccessSchool(user, existing.school_id)) {
+      throw { message: 'Acesso negado a este relatório', statusCode: 403 };
+    }
+
+    if (existing.created_by !== user.id && user.role !== 'admin') {
+      throw { message: 'Apenas o criador ou admin pode excluir este relatório', statusCode: 403 };
+    }
+
+    await db('custom_reports').where('id', id).delete();
+    return { message: 'Relatório excluído com sucesso' };
+  }
+
+  async executeCustomReport(id: string, additionalFilters: any = {}, user: AuthPayload) {
+    const report = await this.getCustomReportById(id, user);
+    
+    const startTime = Date.now();
+    let data;
+
+    switch (report.report_type) {
+      case 'students':
+        data = await this.getStudentsReport({ ...report.filters, ...additionalFilters }, user);
+        break;
+      case 'attendance':
+        data = await this.getAttendanceReport({ ...report.filters, ...additionalFilters }, user);
+        break;
+      case 'grades':
+        data = await this.getGradesReport({ ...report.filters, ...additionalFilters }, user);
+        break;
+      case 'financial':
+        data = await this.getFinancialReport({ ...report.filters, ...additionalFilters }, user);
+        break;
+      case 'enrollments':
+        data = await this.getEnrollmentsReport({ ...report.filters, ...additionalFilters }, user);
+        break;
+      default:
+        throw { message: 'Tipo de relatório não suportado', statusCode: 400 };
+    }
+
+    const executionTime = Date.now() - startTime;
+
+    await db('report_executions').insert({
+      report_id: id,
+      executed_by: user.id,
+      row_count: data.length,
+      execution_time_ms: executionTime,
+      filters_used: JSON.stringify({ ...report.filters, ...additionalFilters })
+    });
+
+    return {
+      report_info: report,
+      data,
+      metadata: {
+        row_count: data.length,
+        execution_time_ms: executionTime,
+        executed_at: new Date().toISOString()
+      }
+    };
+  }
+
+  // ==================== Relatórios Predefinidos ====================
+  
   async getStudentsReport(filters: any = {}, user?: AuthPayload) {
     let query = db('students as s')
       .join('users as u', 'u.id', 's.user_id')
       .join('enrollments as e', 'e.student_id', 's.id')
       .join('classes as c', 'c.id', 'e.class_id');
     
-    query = applySchoolFilter(query, user);
+    query = applySchoolFilter(query, user, 's');
     
-    query = query.select('s.id', 's.student_number', 'u.first_name', 'u.last_name', 'u.email', 's.birth_date', 's.gender', 'c.name as class_name', 'e.status as enrollment_status');
+    query = query.select(
+      db.raw("CONCAT(u.first_name, ' ', u.last_name) as nome"),
+      's.student_number as numero_aluno',
+      'u.email',
+      db.raw("TO_CHAR(s.birth_date, 'DD/MM/YYYY') as data_nascimento"),
+      db.raw("CASE s.gender WHEN 'M' THEN 'Masculino' WHEN 'F' THEN 'Feminino' ELSE s.gender END as genero"),
+      'c.name as turma',
+      'e.status as estado_matricula'
+    );
     if (filters.class_id) query.where('e.class_id', filters.class_id);
     if (filters.status) query.where('e.status', filters.status);
 
@@ -26,9 +208,16 @@ export class RelatoriosService {
       .join('subjects as sub', 'sub.id', 'sch.subject_id')
       .join('classes as c', 'c.id', 'sch.class_id');
     
-    query = applySchoolFilter(query, user);
+    query = applySchoolFilter(query, user, 's');
     
-    query = query.select('s.student_number', 'u.first_name', 'u.last_name', 'c.name as class_name', 'sub.name as subject_name', 'ar.date', 'ar.status');
+    query = query.select(
+      db.raw("CONCAT(u.first_name, ' ', u.last_name) as nome"),
+      's.student_number as numero_aluno',
+      'c.name as turma',
+      'sub.name as disciplina',
+      db.raw("TO_CHAR(ar.date, 'DD/MM/YYYY') as data"),
+      'ar.status as estado'
+    );
 
     if (filters.class_id) query.where('sch.class_id', filters.class_id);
     if (filters.date_from) query.where('ar.date', '>=', filters.date_from);
@@ -47,9 +236,19 @@ export class RelatoriosService {
       .join('classes as c', 'c.id', 'a.class_id')
       .join('assessment_types as at', 'at.id', 'a.assessment_type_id');
     
-    query = applySchoolFilter(query, user);
+    query = applySchoolFilter(query, user, 's');
     
-    query = query.select('s.student_number', 'u.first_name', 'u.last_name', 'c.name as class_name', 'sub.name as subject_name', 'a.name as assessment_name', 'at.name as type_name', 'g.score', 'at.max_score', 'a.trimester');
+    query = query.select(
+      db.raw("CONCAT(u.first_name, ' ', u.last_name) as nome"),
+      's.student_number as numero_aluno',
+      'c.name as turma',
+      'sub.name as disciplina',
+      'a.name as avaliacao',
+      'at.name as tipo',
+      'g.score as nota',
+      'at.max_score as nota_maxima',
+      'a.trimester as trimestre'
+    );
 
     if (filters.class_id) query.where('a.class_id', filters.class_id);
     if (filters.subject_id) query.where('a.subject_id', filters.subject_id);
@@ -66,10 +265,17 @@ export class RelatoriosService {
       .join('fee_types as ft', 'ft.id', 'sf.fee_type_id')
       .leftJoin('payments as p', 'p.student_fee_id', 'sf.id');
     
-    query = applySchoolFilter(query, user);
+    query = applySchoolFilter(query, user, 's');
     
-    query = query.select('s.student_number', 'u.first_name', 'u.last_name', 'ft.name as fee_type', 'sf.amount', 'sf.due_date', 'sf.status')
-      .sum('p.amount as paid')
+    query = query.select(
+      db.raw("CONCAT(u.first_name, ' ', u.last_name) as nome"),
+      's.student_number as numero_aluno',
+      'ft.name as tipo_propina',
+      'sf.amount as valor',
+      db.raw("TO_CHAR(sf.due_date, 'DD/MM/YYYY') as data_vencimento"),
+      'sf.status as estado'
+    )
+      .sum('p.amount as pago')
       .groupBy('sf.id', 's.student_number', 'u.first_name', 'u.last_name', 'ft.name', 'sf.amount', 'sf.due_date', 'sf.status');
 
     if (filters.academic_year_id) query.where('sf.academic_year_id', filters.academic_year_id);
@@ -85,9 +291,16 @@ export class RelatoriosService {
       .join('classes as c', 'c.id', 'e.class_id')
       .join('academic_years as ay', 'ay.id', 'e.academic_year_id');
     
-    query = applySchoolFilter(query, user);
+    query = applySchoolFilter(query, user, 's');
     
-    query = query.select('s.student_number', 'u.first_name', 'u.last_name', 'c.name as class_name', 'ay.name as academic_year', 'e.enrollment_date', 'e.status');
+    query = query.select(
+      db.raw("CONCAT(u.first_name, ' ', u.last_name) as nome"),
+      's.student_number as numero_aluno',
+      'c.name as turma',
+      'ay.name as ano_lectivo',
+      db.raw("TO_CHAR(e.enrollment_date, 'DD/MM/YYYY') as data_matricula"),
+      'e.status as estado'
+    );
     if (filters.academic_year_id) query.where('e.academic_year_id', filters.academic_year_id);
     if (filters.class_id) query.where('e.class_id', filters.class_id);
     if (filters.status) query.where('e.status', filters.status);

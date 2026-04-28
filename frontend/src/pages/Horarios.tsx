@@ -4,8 +4,10 @@ import horariosService from '../services/horarios.service';
 import teachersService from '../services/teachers.service';
 import academicYearsService from '../services/academicYears.service';
 import type { Schedule, Class, Subject, Room } from '../services/horarios.service';
+import { useAlert } from '../hooks/useAlert';
 
 export default function Horarios() {
+  const { showAlert, showConfirm, showSuccess, showError, AlertComponent } = useAlert();
   const [schedules, setSchedules] = useState<Schedule[]>([]);
   const [classes, setClasses] = useState<Class[]>([]);
   const [subjects, setSubjects] = useState<Subject[]>([]);
@@ -45,32 +47,33 @@ export default function Horarios() {
         academicYearsService.list(),
       ]);
       
-      setSchedules(schedulesData);
-      setClasses(classesData);
-      setSubjects(subjectsData);
-      setRooms(roomsData);
-      setTeachers(teachersData);
-      setAcademicYears(academicYearsData);
-    } catch (error) {
+      console.log('Dados carregados:', {
+        schedules: schedulesData?.length || 0,
+        classes: classesData?.length || 0,
+        subjects: subjectsData?.length || 0,
+        rooms: roomsData?.length || 0,
+        teachers: teachersData?.length || 0,
+        academicYears: academicYearsData?.length || 0,
+      });
+      
+      setSchedules(Array.isArray(schedulesData) ? schedulesData : []);
+      setClasses(Array.isArray(classesData) ? classesData : []);
+      setSubjects(Array.isArray(subjectsData) ? subjectsData : []);
+      setRooms(Array.isArray(roomsData) ? roomsData : []);
+      setTeachers(Array.isArray(teachersData) ? teachersData : []);
+      setAcademicYears(Array.isArray(academicYearsData) ? academicYearsData : []);
+    } catch (error: any) {
       console.error('Erro ao carregar horários:', error);
+      console.error('Detalhes do erro:', error?.response?.data);
+      showError('Erro ao Carregar', `Erro ao carregar dados: ${error?.response?.data?.message || error.message}`);
+      setLoading(false);
     } finally {
       setLoading(false);
     }
   };
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
+  const submitSchedule = async (data: any) => {
     try {
-      const schoolId = localStorage.getItem('school_id') || '';
-      const currentYear = academicYears.find(y => y.is_current);
-      
-      const data = {
-        ...formData,
-        school_id: schoolId,
-        academic_year_id: formData.academic_year_id || currentYear?.id,
-        room_id: formData.room_id || null,
-      };
-
       if (editingSchedule) {
         await horariosService.updateSchedule(editingSchedule.id, data);
       } else {
@@ -80,9 +83,94 @@ export default function Horarios() {
       setShowModal(false);
       resetForm();
       loadData();
-    } catch (error) {
+      showSuccess('Sucesso!', editingSchedule ? 'Horário atualizado com sucesso!' : 'Horário criado com sucesso!');
+    } catch (error: any) {
       console.error('Erro ao salvar horário:', error);
-      alert('Erro ao salvar horário. Verifique os dados e tente novamente.');
+      const errorMessage = error?.response?.data?.message || 'Erro ao salvar horário. Verifique os dados e tente novamente.';
+      showError('Erro ao Salvar', errorMessage);
+    }
+  };
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    try {
+      const schoolId = localStorage.getItem('school_id') || '';
+      const currentYear = academicYears.find(y => y.is_current);
+      
+      const academicYearId = formData.academic_year_id || currentYear?.id;
+      
+      if (!academicYearId) {
+        showAlert({
+          title: 'Ano Académico Obrigatório',
+          message: 'Por favor, selecione um ano académico ou defina um ano académico como atual.',
+          type: 'warning'
+        });
+        return;
+      }
+      
+      // Verificar se o ano letivo selecionado está expirado
+      const selectedYear = academicYears.find(y => y.id === academicYearId);
+      if (selectedYear) {
+        const today = new Date();
+        const endDate = new Date(selectedYear.end_date);
+        if (endDate < today) {
+          showConfirm({
+            title: 'Ano Letivo Expirado',
+            message: `ATENÇÃO: O ano letivo "${selectedYear.name}" já terminou em ${endDate.toLocaleDateString('pt-PT')}.\n\nCriar horários em um ano expirado pode causar problemas.\n\nDeseja continuar mesmo assim?`,
+            type: 'error',
+            confirmText: 'Continuar',
+            onConfirm: () => submitSchedule(data)
+          });
+          return;
+        }
+      }
+      
+      if (!formData.class_id) {
+        showAlert({
+          title: 'Turma Obrigatória',
+          message: 'Por favor, selecione uma turma.',
+          type: 'warning'
+        });
+        return;
+      }
+      
+      if (!formData.subject_id) {
+        showAlert({
+          title: 'Disciplina Obrigatória',
+          message: 'Por favor, selecione uma disciplina.',
+          type: 'warning'
+        });
+        return;
+      }
+      
+      if (!formData.teacher_id) {
+        showAlert({
+          title: 'Professor Obrigatório',
+          message: 'Por favor, selecione um professor.',
+          type: 'warning'
+        });
+        return;
+      }
+      
+      if (!formData.start_time || !formData.end_time) {
+        showAlert({
+          title: 'Horários Obrigatórios',
+          message: 'Por favor, preencha os horários de início e fim.',
+          type: 'warning'
+        });
+        return;
+      }
+      
+      const data = {
+        ...formData,
+        school_id: schoolId,
+        academic_year_id: academicYearId,
+        room_id: formData.room_id || null,
+      };
+
+      await submitSchedule(data);
+    } catch (error: any) {
+      console.error('Erro na validação:', error);
     }
   };
 
@@ -90,7 +178,7 @@ export default function Horarios() {
     setEditingSchedule(schedule);
     setFormData({
       school_id: schedule.school_id,
-      academic_year_id: '',
+      academic_year_id: schedule.academic_year_id || '',
       class_id: schedule.class_id,
       subject_id: schedule.subject_id,
       teacher_id: schedule.teacher_id,
@@ -333,6 +421,23 @@ export default function Horarios() {
             <form onSubmit={handleSubmit} className="p-6 space-y-4">
               <div className="grid grid-cols-2 gap-4">
                 <div>
+                  <label className="block text-sm font-medium text-gray-700">Ano Académico *</label>
+                  <select
+                    value={formData.academic_year_id}
+                    onChange={(e) => setFormData({ ...formData, academic_year_id: e.target.value })}
+                    className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-blue-500 focus:border-blue-500"
+                    required
+                  >
+                    <option value="">Selecione um ano académico</option>
+                    {academicYears.map((year) => (
+                      <option key={year.id} value={year.id}>
+                        {year.name} {year.is_current ? '(Atual)' : ''}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+
+                <div>
                   <label className="block text-sm font-medium text-gray-700">Turma *</label>
                   <select
                     value={formData.class_id}
@@ -418,22 +523,6 @@ export default function Horarios() {
                 </div>
 
                 <div>
-                  <label className="block text-sm font-medium text-gray-700">Ano Lectivo</label>
-                  <select
-                    value={formData.academic_year_id}
-                    onChange={(e) => setFormData({ ...formData, academic_year_id: e.target.value })}
-                    className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-blue-500 focus:border-blue-500"
-                  >
-                    <option value="">Ano corrente</option>
-                    {academicYears.map((year) => (
-                      <option key={year.id} value={year.id}>
-                        {year.name}
-                      </option>
-                    ))}
-                  </select>
-                </div>
-
-                <div>
                   <label className="block text-sm font-medium text-gray-700">Hora de Início *</label>
                   <input
                     type="time"
@@ -478,6 +567,9 @@ export default function Horarios() {
           </div>
         </div>
       )}
+
+      {/* Alert Dialog */}
+      {AlertComponent}
     </div>
   );
 }

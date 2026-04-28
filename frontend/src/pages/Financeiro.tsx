@@ -231,6 +231,24 @@ export default function Financeiro() {
 
   const handleBulkFeeSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    
+    // Verificar se o ano letivo selecionado está expirado
+    const selectedYear = academicYears.find(y => y.id === bulkFeeForm.academic_year_id);
+    if (selectedYear) {
+      const today = new Date();
+      const endDate = new Date(selectedYear.end_date);
+      if (endDate < today) {
+        const confirmCreate = confirm(
+          `ATENÇÃO: O ano letivo "${selectedYear.name}" já terminou em ${endDate.toLocaleDateString('pt-PT')}.\n\n` +
+          'Criar propinas em um ano expirado pode causar problemas.\n\n' +
+          'Deseja continuar mesmo assim?'
+        );
+        if (!confirmCreate) {
+          return;
+        }
+      }
+    }
+    
     try {
       const result = await financeiroService.bulkCreateStudentFees(bulkFeeForm);
       alert(`${result.length} propinas criadas com sucesso!`);

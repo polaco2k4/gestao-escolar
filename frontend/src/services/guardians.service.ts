@@ -37,7 +37,7 @@ export interface UpdateGuardianData {
 
 export const guardiansService = {
   async list(): Promise<Guardian[]> {
-    const response = await api.get('/api/guardians');
+    const response = await api.get('/guardians');
     return response.data.data;
   },
 
@@ -47,7 +47,7 @@ export const guardiansService = {
   },
 
   async create(data: CreateGuardianData): Promise<Guardian> {
-    const response = await api.post('/api/guardians', data);
+    const response = await api.post('/guardians', data);
     return response.data.data;
   },
 

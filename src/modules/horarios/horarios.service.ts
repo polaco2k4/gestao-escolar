@@ -53,6 +53,14 @@ export class HorariosService {
     const schoolId = user?.role === 'admin' ? data.school_id : user?.school_id;
     if (!schoolId) throw new AppError('Escola não especificada', 400);
     
+    if (!data.academic_year_id) throw new AppError('Ano académico não especificado', 400);
+    if (!data.class_id) throw new AppError('Turma não especificada', 400);
+    if (!data.subject_id) throw new AppError('Disciplina não especificada', 400);
+    if (!data.teacher_id) throw new AppError('Professor não especificado', 400);
+    if (!data.day_of_week) throw new AppError('Dia da semana não especificado', 400);
+    if (!data.start_time) throw new AppError('Hora de início não especificada', 400);
+    if (!data.end_time) throw new AppError('Hora de fim não especificada', 400);
+    
     if (data.room_id) {
       const conflict = await db('schedules')
         .where({ room_id: data.room_id, day_of_week: data.day_of_week })
@@ -105,15 +113,16 @@ export class HorariosService {
   }
 
   // --- Classes ---
-  async listClasses(filters: any = {}) {
-    const query = db('classes as c')
+  async listClasses(filters: any = {}, user?: AuthPayload) {
+    let query = db('classes as c')
       .join('courses as co', 'co.id', 'c.course_id')
       .join('academic_years as ay', 'ay.id', 'c.academic_year_id')
       .leftJoin('teachers as t', 't.id', 'c.class_director_id')
       .leftJoin('users as u', 'u.id', 't.user_id')
       .select('c.*', 'co.name as course_name', 'ay.name as academic_year_name', 'u.first_name as director_first_name', 'u.last_name as director_last_name');
 
-    if (filters.school_id) query.where('c.school_id', filters.school_id);
+    query = applySchoolFilter(query, user, 'c');
+    
     if (filters.academic_year_id) query.where('c.academic_year_id', filters.academic_year_id);
     if (filters.course_id) query.where('c.course_id', filters.course_id);
 
@@ -150,9 +159,9 @@ export class HorariosService {
   }
 
   // --- Subjects ---
-  async listSubjects(filters: any = {}) {
-    const query = db('subjects');
-    if (filters.school_id) query.where('school_id', filters.school_id);
+  async listSubjects(filters: any = {}, user?: AuthPayload) {
+    let query = db('subjects');
+    query = applySchoolFilter(query, user);
     if (filters.course_id) query.where('course_id', filters.course_id);
     return query.orderBy('name');
   }

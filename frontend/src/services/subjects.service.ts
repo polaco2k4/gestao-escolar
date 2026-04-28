@@ -15,7 +15,7 @@ export interface Subject {
 
 class SubjectsService {
   async list(): Promise<Subject[]> {
-    const response = await api.get('/api/subjects');
+    const response = await api.get('/subjects');
     return response.data.data;
   }
 
@@ -25,7 +25,7 @@ class SubjectsService {
   }
 
   async create(data: Omit<Subject, 'id' | 'school_id' | 'course_id' | 'created_at' | 'updated_at'>): Promise<Subject> {
-    const response = await api.post('/api/subjects', data);
+    const response = await api.post('/subjects', data);
     return response.data.data;
   }
 

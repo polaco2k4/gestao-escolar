@@ -54,7 +54,7 @@ export default function Assiduidade() {
   const loadRecords = async () => {
     try {
       setLoading(true);
-      const response = await api.get('/api/assiduidade', { params: filters });
+      const response = await api.get('/assiduidade', { params: filters });
       const data = response.data.data;
       setRecords(data.records || []);
       setMeta(data.meta || { total: 0, page: 1, limit: 20, totalPages: 0 });

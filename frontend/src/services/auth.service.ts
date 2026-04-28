@@ -30,17 +30,17 @@ export interface AuthResponse {
 
 export const authService = {
   async register(data: RegisterData): Promise<AuthResponse> {
-    const response = await api.post('/api/auth/register', data);
+    const response = await api.post('/auth/register', data);
     return response.data.data;
   },
 
   async login(data: LoginData): Promise<AuthResponse> {
-    const response = await api.post('/api/auth/login', data);
+    const response = await api.post('/auth/login', data);
     return response.data.data;
   },
 
   async getProfile(token: string) {
-    const response = await api.get('/api/auth/me', {
+    const response = await api.get('/auth/me', {
       headers: { Authorization: `Bearer ${token}` }
     });
     return response.data.data;

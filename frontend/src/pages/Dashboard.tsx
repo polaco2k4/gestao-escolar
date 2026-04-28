@@ -1,5 +1,6 @@
 import { useAuth } from '../contexts/AuthContext';
 import { Users, GraduationCap, BookOpen, DollarSign, Calendar, MessageSquare, FileText, BarChart } from 'lucide-react';
+import AcademicYearAlert from '../components/AcademicYearAlert';
 
 export default function Dashboard() {
   const { user } = useAuth();
@@ -38,6 +39,9 @@ export default function Dashboard() {
           )}
         </p>
       </div>
+
+      {/* Academic Year Alert */}
+      <AcademicYearAlert />
 
       {/* Stats Grid */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">

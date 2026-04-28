@@ -40,7 +40,7 @@ export interface SchoolStats {
 
 class SchoolsService {
   async list(): Promise<School[]> {
-    const response = await api.get('/api/schools');
+    const response = await api.get('/schools');
     return response.data.data?.schools || [];
   }
 
@@ -55,7 +55,7 @@ class SchoolsService {
   }
 
   async create(data: SchoolFormData): Promise<School> {
-    const response = await api.post('/api/schools', data);
+    const response = await api.post('/schools', data);
     return response.data.data;
   }
 

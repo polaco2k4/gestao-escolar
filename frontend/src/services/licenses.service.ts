@@ -76,7 +76,7 @@ export interface GlobalStats {
 const licensesService = {
   // Planos
   listPlans: async () => {
-    const response = await api.get('/api/licenses/plans');
+    const response = await api.get('/licenses/plans');
     return response.data;
   },
 
@@ -86,7 +86,7 @@ const licensesService = {
   },
 
   createPlan: async (data: Partial<LicensePlan>) => {
-    const response = await api.post('/api/licenses/plans', data);
+    const response = await api.post('/licenses/plans', data);
     return response.data;
   },
 
@@ -97,7 +97,7 @@ const licensesService = {
 
   // Licenças
   listLicenses: async () => {
-    const response = await api.get('/api/licenses');
+    const response = await api.get('/licenses');
     return response.data;
   },
 
@@ -121,7 +121,7 @@ const licensesService = {
     auto_renew?: boolean;
     notes?: string;
   }) => {
-    const response = await api.post('/api/licenses', data);
+    const response = await api.post('/licenses', data);
     return response.data;
   },
 
@@ -147,7 +147,7 @@ const licensesService = {
   },
 
   getGlobalStats: async (): Promise<{ data: GlobalStats }> => {
-    const response = await api.get('/api/licenses/stats/global');
+    const response = await api.get('/licenses/stats/global');
     return response.data;
   },
 };
