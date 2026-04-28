@@ -27,7 +27,16 @@ const REPORT_TYPES = [
   { value: 'attendance', label: 'Assiduidade' },
   { value: 'grades', label: 'Avaliações' },
   { value: 'financial', label: 'Financeiro' },
-  { value: 'enrollments', label: 'Matrículas' }
+  { value: 'enrollments', label: 'Matrículas' },
+  { value: 'teachers', label: 'Professores' },
+  { value: 'classes', label: 'Turmas' },
+  { value: 'subjects', label: 'Disciplinas' },
+  { value: 'courses', label: 'Cursos' },
+  { value: 'academic_years', label: 'Anos Lectivos' },
+  { value: 'rooms', label: 'Salas' },
+  { value: 'schedules', label: 'Horários' },
+  { value: 'guardians', label: 'Encarregados' },
+  { value: 'documents', label: 'Documentos' },
 ];
 
 const RelatoriosPersonalizados: React.FC = () => {
