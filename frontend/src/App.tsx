@@ -37,6 +37,11 @@ import Documentos from './pages/Documentos';
 import Encarregados from './pages/Encarregados';
 import EncarregadoForm from './pages/EncarregadoForm';
 import MeusEducandos from './pages/MeusEducandos';
+import AdminDashboard from './pages/AdminDashboard';
+import Licencas from './pages/Licencas';
+import LicencaForm from './pages/LicencaForm';
+import LicencaUso from './pages/LicencaUso';
+import LicencaPlanos from './pages/LicencaPlanos';
 
 function App() {
   return (
@@ -54,6 +59,12 @@ function App() {
             }
           >
             <Route path="dashboard" element={<Dashboard />} />
+            <Route path="admin" element={<RoleProtectedRoute allowedRoles={['admin']}><AdminDashboard /></RoleProtectedRoute>} />
+            <Route path="licencas" element={<RoleProtectedRoute allowedRoles={['admin']}><Licencas /></RoleProtectedRoute>} />
+            <Route path="licencas/nova" element={<RoleProtectedRoute allowedRoles={['admin']}><LicencaForm /></RoleProtectedRoute>} />
+            <Route path="licencas/planos" element={<RoleProtectedRoute allowedRoles={['admin']}><LicencaPlanos /></RoleProtectedRoute>} />
+            <Route path="licencas/:id/editar" element={<RoleProtectedRoute allowedRoles={['admin']}><LicencaForm /></RoleProtectedRoute>} />
+            <Route path="licencas/:id/uso" element={<RoleProtectedRoute allowedRoles={['admin']}><LicencaUso /></RoleProtectedRoute>} />
             <Route path="matriculas" element={<Matriculas />} />
             <Route path="matriculas/nova" element={<MatriculaForm />} />
             <Route path="matriculas/:id" element={<MatriculaDetail />} />

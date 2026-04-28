@@ -21,7 +21,10 @@ import {
   UserCheck,
   ClipboardCheck,
   MapPin,
-  Briefcase
+  Briefcase,
+  Shield,
+  Key,
+  CreditCard
 } from 'lucide-react';
 import { useState } from 'react';
 
@@ -46,6 +49,9 @@ export default function Layout() {
 
   const allNavigation = [
     { name: 'Dashboard', href: '/dashboard', icon: LayoutDashboard, roles: ['admin', 'gestor'] },
+    { name: 'Painel Admin', href: '/admin', icon: Shield, roles: ['admin'] },
+    { name: 'Planos', href: '/licencas/planos', icon: CreditCard, roles: ['admin'] },
+    { name: 'Licenças', href: '/licencas', icon: Key, roles: ['admin'] },
     { name: 'Escolas', href: '/escolas', icon: School, roles: ['admin'] },
     { name: 'Cursos', href: '/courses', icon: Briefcase, roles: ['admin', 'gestor'] },
     { name: 'Turmas', href: '/turmas', icon: UsersRound, roles: ['admin', 'gestor', 'professor'] },

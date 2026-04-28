@@ -26,6 +26,7 @@ import assiduidadeRoutes from './modules/assiduidade/assiduidade.routes';
 import documentosRoutes from './modules/documentos/documentos.routes';
 import relatoriosRoutes from './modules/relatorios/relatorios.routes';
 import guardiansRoutes from './modules/guardians/guardians.routes';
+import licensesRoutes from './modules/licenses/licenses.routes';
 
 dotenv.config();
 
@@ -71,6 +72,7 @@ app.use('/api/assiduidade', assiduidadeRoutes);
 app.use('/api/documentos', documentosRoutes);
 app.use('/api/relatorios', relatoriosRoutes);
 app.use('/api/guardians', guardiansRoutes);
+app.use('/api/licenses', licensesRoutes);
 
 app.use(notFoundHandler);
 app.use(errorHandler);
