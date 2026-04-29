@@ -57,12 +57,12 @@ class FinanceiroService {
   }
 
   async updateFeeType(id: string, data: Partial<FeeType>): Promise<FeeType> {
-    const response = await api.put(`/api/financeiro/fee-types/${id}`, data);
+    const response = await api.put(`/financeiro/fee-types/${id}`, data);
     return response.data.data;
   }
 
   async deleteFeeType(id: string): Promise<void> {
-    await api.delete(`/api/financeiro/fee-types/${id}`);
+    await api.delete(`/financeiro/fee-types/${id}`);
   }
 
   async listStudentFees(filters?: { student_id?: string; status?: string }): Promise<StudentFee[]> {
@@ -72,7 +72,7 @@ class FinanceiroService {
   }
 
   async getStudentFees(studentId: string): Promise<StudentFee[]> {
-    const response = await api.get(`/api/financeiro/student-fees/student/${studentId}`);
+    const response = await api.get(`/financeiro/student-fees/student/${studentId}`);
     return response.data.data || [];
   }
 
@@ -97,7 +97,7 @@ class FinanceiroService {
   }
 
   async getPaymentById(id: string): Promise<Payment> {
-    const response = await api.get(`/api/financeiro/payments/${id}`);
+    const response = await api.get(`/financeiro/payments/${id}`);
     return response.data.data;
   }
 

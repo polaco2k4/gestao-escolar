@@ -81,7 +81,7 @@ const licensesService = {
   },
 
   getPlanById: async (id: string) => {
-    const response = await api.get(`/api/licenses/plans/${id}`);
+    const response = await api.get(`/licenses/plans/${id}`);
     return response.data;
   },
 
@@ -91,7 +91,7 @@ const licensesService = {
   },
 
   updatePlan: async (id: string, data: Partial<LicensePlan>) => {
-    const response = await api.put(`/api/licenses/plans/${id}`, data);
+    const response = await api.put(`/licenses/plans/${id}`, data);
     return response.data;
   },
 
@@ -102,12 +102,12 @@ const licensesService = {
   },
 
   getLicenseById: async (id: string) => {
-    const response = await api.get(`/api/licenses/${id}`);
+    const response = await api.get(`/licenses/${id}`);
     return response.data;
   },
 
   getLicenseBySchoolId: async (schoolId: string) => {
-    const response = await api.get(`/api/licenses/school/${schoolId}`);
+    const response = await api.get(`/licenses/school/${schoolId}`);
     return response.data;
   },
 
@@ -126,23 +126,23 @@ const licensesService = {
   },
 
   updateLicense: async (id: string, data: Partial<License>) => {
-    const response = await api.put(`/api/licenses/${id}`, data);
+    const response = await api.put(`/licenses/${id}`, data);
     return response.data;
   },
 
   deleteLicense: async (id: string) => {
-    const response = await api.delete(`/api/licenses/${id}`);
+    const response = await api.delete(`/licenses/${id}`);
     return response.data;
   },
 
   // Verificação e estatísticas
   checkLimits: async (schoolId: string) => {
-    const response = await api.get(`/api/licenses/check/${schoolId}`);
+    const response = await api.get(`/licenses/check/${schoolId}`);
     return response.data;
   },
 
   getUsage: async (schoolId: string) => {
-    const response = await api.get(`/api/licenses/usage/${schoolId}`);
+    const response = await api.get(`/licenses/usage/${schoolId}`);
     return response.data;
   },
 

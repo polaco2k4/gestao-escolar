@@ -42,7 +42,7 @@ export const guardiansService = {
   },
 
   async getById(id: string): Promise<Guardian> {
-    const response = await api.get(`/api/guardians/${id}`);
+    const response = await api.get(`/guardians/${id}`);
     return response.data.data;
   },
 
@@ -52,11 +52,11 @@ export const guardiansService = {
   },
 
   async update(id: string, data: UpdateGuardianData): Promise<Guardian> {
-    const response = await api.put(`/api/guardians/${id}`, data);
+    const response = await api.put(`/guardians/${id}`, data);
     return response.data.data;
   },
 
   async delete(id: string): Promise<void> {
-    await api.delete(`/api/guardians/${id}`);
+    await api.delete(`/guardians/${id}`);
   }
 };

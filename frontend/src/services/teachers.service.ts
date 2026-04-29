@@ -22,7 +22,7 @@ class TeachersService {
   }
 
   async getById(id: string): Promise<Teacher> {
-    const response = await api.get(`/api/teachers/${id}`);
+    const response = await api.get(`/teachers/${id}`);
     return response.data.data;
   }
 
@@ -32,12 +32,12 @@ class TeachersService {
   }
 
   async update(id: string, data: Partial<Teacher>): Promise<Teacher> {
-    const response = await api.put(`/api/teachers/${id}`, data);
+    const response = await api.put(`/teachers/${id}`, data);
     return response.data.data;
   }
 
   async delete(id: string): Promise<void> {
-    await api.delete(`/api/teachers/${id}`);
+    await api.delete(`/teachers/${id}`);
   }
 }
 

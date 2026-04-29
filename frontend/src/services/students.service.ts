@@ -68,7 +68,7 @@ class StudentsService {
   }
 
   async getById(id: string): Promise<Student> {
-    const response = await api.get(`/api/students/${id}`);
+    const response = await api.get(`/students/${id}`);
     return response.data.data;
   }
 
@@ -78,12 +78,12 @@ class StudentsService {
   }
 
   async update(id: string, data: Partial<StudentFormData>): Promise<Student> {
-    const response = await api.put(`/api/students/${id}`, data);
+    const response = await api.put(`/students/${id}`, data);
     return response.data.data;
   }
 
   async delete(id: string): Promise<void> {
-    await api.delete(`/api/students/${id}`);
+    await api.delete(`/students/${id}`);
   }
 }
 

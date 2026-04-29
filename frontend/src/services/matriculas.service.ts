@@ -55,7 +55,7 @@ class MatriculasService {
   }
 
   async getById(id: string): Promise<Enrollment> {
-    const response = await api.get(`/api/matriculas/${id}`);
+    const response = await api.get(`/matriculas/${id}`);
     return response.data.data;
   }
 
@@ -65,12 +65,12 @@ class MatriculasService {
   }
 
   async update(id: string, data: Partial<EnrollmentFormData>): Promise<Enrollment> {
-    const response = await api.put(`/api/matriculas/${id}`, data);
+    const response = await api.put(`/matriculas/${id}`, data);
     return response.data.data;
   }
 
   async delete(id: string): Promise<void> {
-    await api.delete(`/api/matriculas/${id}`);
+    await api.delete(`/matriculas/${id}`);
   }
 }
 

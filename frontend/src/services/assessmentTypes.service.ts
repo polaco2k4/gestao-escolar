@@ -16,7 +16,7 @@ class AssessmentTypesService {
   }
 
   async getById(id: string): Promise<AssessmentType> {
-    const response = await api.get(`/api/assessment-types/${id}`);
+    const response = await api.get(`/assessment-types/${id}`);
     return response.data.data;
   }
 
@@ -26,12 +26,12 @@ class AssessmentTypesService {
   }
 
   async update(id: string, data: Partial<AssessmentType>): Promise<AssessmentType> {
-    const response = await api.put(`/api/assessment-types/${id}`, data);
+    const response = await api.put(`/assessment-types/${id}`, data);
     return response.data.data;
   }
 
   async delete(id: string): Promise<void> {
-    await api.delete(`/api/assessment-types/${id}`);
+    await api.delete(`/assessment-types/${id}`);
   }
 }
 

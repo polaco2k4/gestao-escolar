@@ -20,7 +20,7 @@ class SubjectsService {
   }
 
   async getById(id: string): Promise<Subject> {
-    const response = await api.get(`/api/subjects/${id}`);
+    const response = await api.get(`/subjects/${id}`);
     return response.data.data;
   }
 
@@ -30,12 +30,12 @@ class SubjectsService {
   }
 
   async update(id: string, data: Partial<Subject>): Promise<Subject> {
-    const response = await api.put(`/api/subjects/${id}`, data);
+    const response = await api.put(`/subjects/${id}`, data);
     return response.data.data;
   }
 
   async delete(id: string): Promise<void> {
-    await api.delete(`/api/subjects/${id}`);
+    await api.delete(`/subjects/${id}`);
   }
 }
 

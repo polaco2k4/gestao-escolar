@@ -64,7 +64,7 @@ class HorariosService {
   }
 
   async getScheduleById(id: string): Promise<Schedule> {
-    const response = await api.get(`/api/horarios/schedules/${id}`);
+    const response = await api.get(`/horarios/schedules/${id}`);
     return response.data.data;
   }
 
@@ -74,12 +74,12 @@ class HorariosService {
   }
 
   async updateSchedule(id: string, data: Partial<Schedule>): Promise<Schedule> {
-    const response = await api.put(`/api/horarios/schedules/${id}`, data);
+    const response = await api.put(`/horarios/schedules/${id}`, data);
     return response.data.data;
   }
 
   async deleteSchedule(id: string): Promise<void> {
-    await api.delete(`/api/horarios/schedules/${id}`);
+    await api.delete(`/horarios/schedules/${id}`);
   }
 
   async listClasses(filters?: { academic_year_id?: string }): Promise<Class[]> {
@@ -89,7 +89,7 @@ class HorariosService {
   }
 
   async getClassById(id: string): Promise<Class> {
-    const response = await api.get(`/api/horarios/classes/${id}`);
+    const response = await api.get(`/horarios/classes/${id}`);
     return response.data.data;
   }
 
@@ -99,7 +99,7 @@ class HorariosService {
   }
 
   async updateClass(id: string, data: Partial<Class>): Promise<Class> {
-    const response = await api.put(`/api/horarios/classes/${id}`, data);
+    const response = await api.put(`/horarios/classes/${id}`, data);
     return response.data.data;
   }
 
@@ -115,7 +115,7 @@ class HorariosService {
   }
 
   async updateSubject(id: string, data: Partial<Subject>): Promise<Subject> {
-    const response = await api.put(`/api/horarios/subjects/${id}`, data);
+    const response = await api.put(`/horarios/subjects/${id}`, data);
     return response.data.data;
   }
 
@@ -131,22 +131,22 @@ class HorariosService {
   }
 
   async updateRoom(id: string, data: Partial<Room>): Promise<Room> {
-    const response = await api.put(`/api/horarios/rooms/${id}`, data);
+    const response = await api.put(`/horarios/rooms/${id}`, data);
     return response.data.data;
   }
 
   async deleteRoom(id: string): Promise<void> {
-    await api.delete(`/api/horarios/rooms/${id}`);
+    await api.delete(`/horarios/rooms/${id}`);
   }
 
   async getScheduleByClass(classId: string): Promise<Schedule[]> {
-    const response = await api.get(`/api/horarios/by-class/${classId}`);
+    const response = await api.get(`/horarios/by-class/${classId}`);
     const data = response.data.data;
     return Array.isArray(data) ? data : [];
   }
 
   async getScheduleByTeacher(teacherId: string): Promise<Schedule[]> {
-    const response = await api.get(`/api/horarios/by-teacher/${teacherId}`);
+    const response = await api.get(`/horarios/by-teacher/${teacherId}`);
     const data = response.data.data;
     return Array.isArray(data) ? data : [];
   }

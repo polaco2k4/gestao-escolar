@@ -113,7 +113,7 @@ class AvaliacoesService {
   }
 
   async getById(id: string): Promise<Assessment> {
-    const response = await api.get(`/api/avaliacoes/${id}`);
+    const response = await api.get(`/avaliacoes/${id}`);
     return response.data.data;
   }
 
@@ -123,26 +123,26 @@ class AvaliacoesService {
   }
 
   async update(id: string, data: Partial<AssessmentFormData>): Promise<Assessment> {
-    const response = await api.put(`/api/avaliacoes/${id}`, data);
+    const response = await api.put(`/avaliacoes/${id}`, data);
     return response.data.data;
   }
 
   async delete(id: string): Promise<void> {
-    await api.delete(`/api/avaliacoes/${id}`);
+    await api.delete(`/avaliacoes/${id}`);
   }
 
   async listGrades(assessmentId: string): Promise<Grade[]> {
-    const response = await api.get(`/api/avaliacoes/${assessmentId}/grades`);
+    const response = await api.get(`/avaliacoes/${assessmentId}/grades`);
     return response.data.data;
   }
 
   async listGradesByGuardian(assessmentId: string): Promise<Grade[]> {
-    const response = await api.get(`/api/avaliacoes/${assessmentId}/grades/my-students`);
+    const response = await api.get(`/avaliacoes/${assessmentId}/grades/my-students`);
     return response.data.data;
   }
 
   async saveGrades(assessmentId: string, grades: SaveGradeDTO[]): Promise<Grade[]> {
-    const response = await api.post(`/api/avaliacoes/${assessmentId}/grades`, { grades });
+    const response = await api.post(`/avaliacoes/${assessmentId}/grades`, { grades });
     return response.data.data;
   }
 
@@ -157,12 +157,12 @@ class AvaliacoesService {
   }
 
   async submitGradeSheet(id: string): Promise<GradeSheet> {
-    const response = await api.put(`/api/avaliacoes/sheets/${id}/submit`);
+    const response = await api.put(`/avaliacoes/sheets/${id}/submit`);
     return response.data.data;
   }
 
   async approveGradeSheet(id: string): Promise<GradeSheet> {
-    const response = await api.put(`/api/avaliacoes/sheets/${id}/approve`);
+    const response = await api.put(`/avaliacoes/sheets/${id}/approve`);
     return response.data.data;
   }
 }

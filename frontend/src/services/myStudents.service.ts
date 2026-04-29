@@ -28,7 +28,7 @@ export const myStudentsService = {
       ...filters
     });
     
-    const response = await api.get(`/api/students/my-students?${params}`);
+    const response = await api.get(`/students/my-students?${params}`);
     return response.data.data;
   }
 };

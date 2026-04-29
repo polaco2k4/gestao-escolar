@@ -48,7 +48,7 @@ class ComunicacaoService {
   }
 
   async getMessageById(id: string): Promise<Message> {
-    const response = await api.get(`/api/comunicacao/messages/${id}`);
+    const response = await api.get(`/comunicacao/messages/${id}`);
     return response.data.data;
   }
 
@@ -58,7 +58,7 @@ class ComunicacaoService {
   }
 
   async deleteMessage(id: string): Promise<void> {
-    await api.delete(`/api/comunicacao/messages/${id}`);
+    await api.delete(`/comunicacao/messages/${id}`);
   }
 
   async listNotifications(page = 1, limit = 20): Promise<{ notifications: Notification[]; unread_count: number; meta: any }> {
@@ -67,7 +67,7 @@ class ComunicacaoService {
   }
 
   async markAsRead(id: string): Promise<Notification> {
-    const response = await api.put(`/api/comunicacao/notifications/${id}/read`);
+    const response = await api.put(`/comunicacao/notifications/${id}/read`);
     return response.data.data;
   }
 
