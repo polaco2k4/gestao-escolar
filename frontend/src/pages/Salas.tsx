@@ -44,7 +44,7 @@ export default function Salas() {
 
       const data = {
         name: formData.name,
-        building: formData.building || null,
+        building: formData.building || undefined,
         capacity: formData.capacity ? parseInt(formData.capacity) : 40,
         type: formData.type || 'classroom',
         school_id: schoolId,
