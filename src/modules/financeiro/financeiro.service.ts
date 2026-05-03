@@ -121,13 +121,23 @@ export class FinanceiroService {
     return fee;
   }
 
-  async bulkCreateStudentFees(feeTypeId: string, academicYearId: string, classId: string) {
+  async bulkCreateStudentFees(feeTypeId: string, academicYearId: string, classId: string, user?: AuthPayload) {
+    const schoolId = user?.role === 'admin' ? undefined : user?.school_id;
+
     const feeType = await db('fee_types').where({ id: feeTypeId }).first();
     if (!feeType) throw new AppError('Tipo de propina não encontrado', 404);
 
-    const enrollments = await db('enrollments')
-      .where({ class_id: classId, academic_year_id: academicYearId, status: 'active' })
-      .select('student_id');
+    const enrollmentsQuery = db('enrollments')
+      .where({ class_id: classId, academic_year_id: academicYearId, status: 'active' });
+    if (schoolId) enrollmentsQuery.where({ school_id: schoolId });
+    const enrollments = await enrollmentsQuery.select('student_id');
+
+    if (enrollments.length === 0) {
+      throw new AppError('Nenhum aluno matriculado activo encontrado para a turma e ano lectivo seleccionados', 404);
+    }
+
+    const resolvedSchoolId = schoolId ?? feeType.school_id;
+    if (!resolvedSchoolId) throw new AppError('Escola não especificada', 400);
 
     const fees = enrollments.map((e: any) => ({
       student_id: e.student_id,
@@ -135,6 +145,7 @@ export class FinanceiroService {
       academic_year_id: academicYearId,
       amount: feeType.amount,
       due_date: new Date(),
+      school_id: resolvedSchoolId,
     }));
 
     const created = await db('student_fees').insert(fees).returning('*');
