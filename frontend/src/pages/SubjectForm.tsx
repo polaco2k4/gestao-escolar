@@ -165,7 +165,7 @@ export default function SubjectForm() {
               disabled={!canEdit && isEditing}
               className={`w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 ${!canEdit && isEditing ? 'bg-gray-100 cursor-not-allowed' : ''}`}
             >
-              <option value="">Sem curso associado</option>
+              <option value="">Transversal (todos os cursos)</option>
               {courses.map((course) => (
                 <option key={course.id} value={course.id}>
                   {course.name}

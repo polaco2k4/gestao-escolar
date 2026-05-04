@@ -6,6 +6,18 @@ import { AuthPayload } from '../../middleware/auth';
 
 export class MatriculasService {
   async list(page = 1, limit = 20, filters: any = {}, user?: AuthPayload) {
+    // Encarregados só vêem matrículas dos seus educandos
+    if (user?.role === 'encarregado') {
+      const guardian = await db('guardians').where({ user_id: user.id }).select('id').first();
+      if (guardian) {
+        const students = await db('students').where({ guardian_id: guardian.id }).select('id');
+        const studentIds = students.map((s: any) => s.id);
+        filters = { ...filters, _student_ids: studentIds.length ? studentIds : ['__none__'] };
+      } else {
+        filters = { ...filters, _student_ids: ['__none__'] };
+      }
+    }
+
     const { offset } = paginate(page, limit);
     let query = db('enrollments as e')
       .join('students as s', 's.id', 'e.student_id')
@@ -25,6 +37,7 @@ export class MatriculasService {
       );
 
     // Remover filtro manual de school_id (já aplicado automaticamente)
+    if (filters._student_ids) query.whereIn('e.student_id', filters._student_ids);
     if (filters.academic_year_id) query.where('e.academic_year_id', filters.academic_year_id);
     if (filters.class_id) query.where('e.class_id', filters.class_id);
     if (filters.status) query.where('e.status', filters.status);
@@ -45,6 +58,7 @@ export class MatriculasService {
     
     const [{ count }] = await countQuery
       .where(function () {
+        if (filters._student_ids) this.whereIn('e.student_id', filters._student_ids);
         if (filters.status) this.where('e.status', filters.status);
       })
       .count('e.id as count');

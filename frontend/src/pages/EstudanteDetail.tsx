@@ -86,7 +86,7 @@ export default function EstudanteDetail() {
           <h1 className="text-3xl font-bold text-gray-900">Detalhes do Estudante</h1>
           <p className="text-gray-600 mt-2">Informações completas do estudante</p>
         </div>
-        {user?.role !== 'professor' && (
+        {(user?.role === 'admin' || user?.role === 'gestor') && (
           <div className="flex space-x-3">
             <Link
               to={`/estudantes/${id}/editar`}
@@ -254,7 +254,7 @@ export default function EstudanteDetail() {
 
         <div className="px-6 py-4 bg-gray-50 border-t border-gray-200 flex justify-between">
           <Link
-            to="/estudantes"
+            to={user?.role === 'encarregado' ? '/meus-educandos' : '/estudantes'}
             className="px-4 py-2 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-100 font-medium transition-colors"
           >
             Voltar à Lista

@@ -13,7 +13,7 @@ export class TeachersService {
     query = applySchoolFilter(query, user, 't');
     
     const teachers = await query
-      .select('t.*', 'u.first_name', 'u.last_name', 'u.email')
+      .select('t.*', 'u.first_name', 'u.last_name', 'u.email', 'u.active')
       .orderBy('u.last_name', 'asc');
     return teachers;
   }
@@ -116,6 +116,20 @@ export class TeachersService {
 
     if (!teacher) throw new AppError('Professor não encontrado', 404);
     return teacher;
+  }
+
+  async toggleActive(id: string) {
+    const teacher = await db('teachers as t')
+      .join('users as u', 'u.id', 't.user_id')
+      .select('t.user_id', 'u.active')
+      .where('t.id', id)
+      .first();
+
+    if (!teacher) throw new AppError('Professor não encontrado', 404);
+
+    const newActive = !teacher.active;
+    await db('users').where('id', teacher.user_id).update({ active: newActive, updated_at: new Date() });
+    return { active: newActive };
   }
 
   async delete(id: string) {

@@ -7,6 +7,38 @@ import { AuthPayload } from '../../middleware/auth';
 export class HorariosService {
   // --- Schedules ---
   async listSchedules(page = 1, limit = 20, filters: any = {}, user?: AuthPayload) {
+    // Estudantes só vêem horários da sua turma
+    if (user?.role === 'estudante') {
+      const student = await db('students').where({ user_id: user.id }).select('id').first();
+      if (student) {
+        const enrollment = await db('enrollments')
+          .where({ student_id: student.id, status: 'active' })
+          .select('class_id')
+          .first();
+        filters = { ...filters, class_id: enrollment?.class_id ?? '__none__' };
+      } else {
+        filters = { ...filters, class_id: '__none__' };
+      }
+    }
+
+    // Encarregados só vêem horários das turmas dos seus educandos
+    if (user?.role === 'encarregado') {
+      const guardian = await db('guardians').where({ user_id: user.id }).select('id').first();
+      if (guardian) {
+        const students = await db('students').where({ guardian_id: guardian.id }).select('id');
+        const studentIds = students.map((s: any) => s.id);
+        const enrollments = await db('enrollments')
+          .whereIn('student_id', studentIds)
+          .where('status', 'active')
+          .select('class_id')
+          .distinct();
+        const classIds = enrollments.map((e: any) => e.class_id);
+        filters = { ...filters, _class_ids: classIds.length ? classIds : ['__none__'] };
+      } else {
+        filters = { ...filters, _class_ids: ['__none__'] };
+      }
+    }
+
     const { offset } = paginate(page, limit);
     let query = db('schedules as s')
       .join('classes as c', 'c.id', 's.class_id')
@@ -14,17 +46,20 @@ export class HorariosService {
       .join('teachers as t', 't.id', 's.teacher_id')
       .join('users as u', 'u.id', 't.user_id')
       .leftJoin('rooms as r', 'r.id', 's.room_id');
-    
+
     query = applySchoolFilter(query, user, 's');
-    
+
     query = query.select('s.*', 'c.name as class_name', 'sub.name as subject_name', 'u.first_name as teacher_first_name', 'u.last_name as teacher_last_name', 'r.name as room_name');
 
-    if (filters.class_id) query.where('s.class_id', filters.class_id);
+    if (filters._class_ids) query.whereIn('s.class_id', filters._class_ids);
+    else if (filters.class_id) query.where('s.class_id', filters.class_id);
     if (filters.teacher_id) query.where('s.teacher_id', filters.teacher_id);
     if (filters.day_of_week) query.where('s.day_of_week', filters.day_of_week);
 
     let countQuery = db('schedules as s');
     countQuery = applySchoolFilter(countQuery, user, 's');
+    if (filters._class_ids) countQuery.whereIn('s.class_id', filters._class_ids);
+    else if (filters.class_id) countQuery.where('s.class_id', filters.class_id);
     const [{ count }] = await countQuery.count('s.id as count');
     const schedules = await query.orderBy('s.day_of_week').orderBy('s.start_time').limit(limit).offset(offset);
     return { schedules, meta: buildPaginationMeta(Number(count), page, limit) };

@@ -11,6 +11,7 @@ export interface Teacher {
   first_name?: string;
   last_name?: string;
   email?: string;
+  active?: boolean;
   created_at: string;
   updated_at: string;
 }
@@ -33,6 +34,11 @@ class TeachersService {
 
   async update(id: string, data: Partial<Teacher>): Promise<Teacher> {
     const response = await api.put(`/teachers/${id}`, data);
+    return response.data.data;
+  }
+
+  async toggleActive(id: string): Promise<{ active: boolean }> {
+    const response = await api.patch(`/teachers/${id}/toggle-active`);
     return response.data.data;
   }
 

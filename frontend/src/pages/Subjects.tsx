@@ -67,8 +67,8 @@ export default function Subjects() {
         )}
       </div>
 
-      {/* Filtro por Curso */}
-      <div className="bg-white rounded-lg shadow px-6 py-4">
+      {/* Filtro por Curso — apenas admin e gestor */}
+      {(user?.role === 'admin' || user?.role === 'gestor') && <div className="bg-white rounded-lg shadow px-6 py-4">
         <div className="flex items-center gap-4">
           <label className="text-sm font-medium text-gray-700 whitespace-nowrap">Filtrar por Curso</label>
           <select
@@ -95,7 +95,7 @@ export default function Subjects() {
             {subjects.length} disciplina{subjects.length !== 1 ? 's' : ''}
           </span>
         </div>
-      </div>
+      </div>}
 
       <div className="bg-white rounded-lg shadow p-6">
         {loading ? (
@@ -149,7 +149,9 @@ export default function Subjects() {
                           {subject.course_name}
                         </span>
                       ) : (
-                        <span className="text-gray-400">—</span>
+                        <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-gray-100 text-gray-500 border border-gray-200">
+                          Transversal
+                        </span>
                       )}
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">

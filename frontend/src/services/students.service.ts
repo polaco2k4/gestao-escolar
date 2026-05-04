@@ -82,6 +82,11 @@ class StudentsService {
     return response.data.data;
   }
 
+  async toggleActive(id: string): Promise<{ active: boolean }> {
+    const response = await api.patch(`/students/${id}/toggle-active`);
+    return response.data.data;
+  }
+
   async delete(id: string): Promise<void> {
     await api.delete(`/students/${id}`);
   }
