@@ -42,6 +42,16 @@ export class TeachersController {
     }
   }
 
+  async toggleActive(req: AuthRequest, res: Response) {
+    try {
+      const result = await service.toggleActive(req.params.id);
+      const msg = result.active ? 'Professor activado com sucesso' : 'Professor desactivado com sucesso';
+      return sendSuccess(res, result, msg);
+    } catch (error: any) {
+      return sendError(res, error.message, error.statusCode || 500);
+    }
+  }
+
   async delete(req: AuthRequest, res: Response) {
     try {
       await service.delete(req.params.id);

@@ -4,6 +4,7 @@ export interface Subject {
   id: string;
   school_id: string;
   course_id?: string;
+  course_name?: string;
   name: string;
   code: string;
   description?: string;
@@ -14,8 +15,8 @@ export interface Subject {
 }
 
 class SubjectsService {
-  async list(): Promise<Subject[]> {
-    const response = await api.get('/subjects');
+  async list(filters?: { course_id?: string }): Promise<Subject[]> {
+    const response = await api.get('/subjects', { params: filters });
     return response.data.data;
   }
 

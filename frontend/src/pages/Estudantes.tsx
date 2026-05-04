@@ -36,9 +36,22 @@ export default function Estudantes() {
     }
   };
 
+  const handleToggleActive = async (id: string, currentActive: boolean) => {
+    const action = currentActive ? 'desactivar' : 'activar';
+    if (!confirm(`Tem certeza que deseja ${action} este estudante?`)) return;
+
+    try {
+      await studentsService.toggleActive(id);
+      loadData();
+    } catch (error: any) {
+      console.error('Erro ao alterar estado do estudante:', error);
+      alert(error.response?.data?.message || 'Erro ao alterar estado do estudante');
+    }
+  };
+
   const handleDelete = async (id: string) => {
     if (!confirm('Tem certeza que deseja eliminar este estudante?')) return;
-    
+
     try {
       await studentsService.delete(id);
       loadData();
@@ -88,7 +101,7 @@ export default function Estudantes() {
     <div className="space-y-6">
       <div className="flex justify-between items-center">
         <h1 className="text-3xl font-bold text-gray-900">Estudantes</h1>
-        {user?.role !== 'professor' && (
+        {(user?.role === 'admin' || user?.role === 'gestor') && (
           <Link
             to="/estudantes/novo"
             className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg font-medium transition-colors"
@@ -195,7 +208,7 @@ export default function Estudantes() {
                         >
                           Ver
                         </Link>
-                        {user?.role !== 'professor' && (
+                        {(user?.role === 'admin' || user?.role === 'gestor') && (
                           <>
                             <Link
                               to={`/estudantes/${student.id}/editar`}
@@ -203,6 +216,12 @@ export default function Estudantes() {
                             >
                               Editar
                             </Link>
+                            <button
+                              onClick={() => handleToggleActive(student.id, student.active)}
+                              className={student.active ? 'text-amber-600 hover:text-amber-900' : 'text-green-600 hover:text-green-900'}
+                            >
+                              {student.active ? 'Desactivar' : 'Activar'}
+                            </button>
                             <button
                               onClick={() => handleDelete(student.id)}
                               className="text-red-600 hover:text-red-900"

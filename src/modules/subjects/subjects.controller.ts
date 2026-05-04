@@ -8,7 +8,8 @@ const service = new SubjectsService();
 export class SubjectsController {
   async list(req: AuthRequest, res: Response) {
     try {
-      const subjects = await service.list(req.user);
+      const { course_id } = req.query as { course_id?: string };
+      const subjects = await service.list(req.user, { course_id });
       return sendSuccess(res, subjects);
     } catch (error: any) {
       return sendError(res, error.message, error.statusCode || 500);

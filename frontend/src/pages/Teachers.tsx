@@ -24,6 +24,19 @@ export default function Teachers() {
     }
   };
 
+  const handleToggleActive = async (id: string, currentActive: boolean) => {
+    const action = currentActive ? 'desactivar' : 'activar';
+    if (!confirm(`Tem certeza que deseja ${action} este professor?`)) return;
+
+    try {
+      await teachersService.toggleActive(id);
+      loadData();
+    } catch (error: any) {
+      console.error('Erro ao alterar estado do professor:', error);
+      alert(error.response?.data?.message || 'Erro ao alterar estado do professor');
+    }
+  };
+
   const handleDelete = async (id: string) => {
     if (!confirm('Tem certeza que deseja eliminar este professor?')) return;
 
@@ -78,6 +91,9 @@ export default function Teachers() {
                     Departamento
                   </th>
                   <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    Estado
+                  </th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                     Acções
                   </th>
                 </tr>
@@ -99,15 +115,32 @@ export default function Teachers() {
                     <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
                       {teacher.department || '-'}
                     </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
-                      {user?.role === 'admin' ? (
+                    <td className="px-6 py-4 whitespace-nowrap">
+                      {teacher.active !== false ? (
+                        <span className="px-2 py-1 text-xs font-semibold rounded-full bg-green-100 text-green-800">
+                          Activo
+                        </span>
+                      ) : (
+                        <span className="px-2 py-1 text-xs font-semibold rounded-full bg-red-100 text-red-800">
+                          Inactivo
+                        </span>
+                      )}
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap text-sm font-medium space-x-2">
+                      {(user?.role === 'admin' || user?.role === 'gestor') ? (
                         <>
                           <Link
                             to={`/teachers/${teacher.id}/editar`}
-                            className="text-blue-600 hover:text-blue-900 mr-4"
+                            className="text-indigo-600 hover:text-indigo-900"
                           >
                             Editar
                           </Link>
+                          <button
+                            onClick={() => handleToggleActive(teacher.id, teacher.active !== false)}
+                            className={teacher.active !== false ? 'text-amber-600 hover:text-amber-900' : 'text-green-600 hover:text-green-900'}
+                          >
+                            {teacher.active !== false ? 'Desactivar' : 'Activar'}
+                          </button>
                           <button
                             onClick={() => handleDelete(teacher.id)}
                             className="text-red-600 hover:text-red-900"

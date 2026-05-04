@@ -6,27 +6,41 @@ import { AuthPayload } from '../../middleware/auth';
 
 export class AssiduidadeService {
   async list(page = 1, limit = 20, filters: any = {}, user?: AuthPayload) {
+    // Encarregados só vêem registos dos seus educandos
+    if (user?.role === 'encarregado') {
+      const guardian = await db('guardians').where({ user_id: user.id }).select('id').first();
+      if (guardian) {
+        const students = await db('students').where({ guardian_id: guardian.id }).select('id');
+        const studentIds = students.map((s: any) => s.id);
+        filters = { ...filters, _student_ids: studentIds.length ? studentIds : ['__none__'] };
+      } else {
+        filters = { ...filters, _student_ids: ['__none__'] };
+      }
+    }
+
     const { offset } = paginate(page, limit);
     let query = db('attendance_records as ar')
       .join('students as s', 's.id', 'ar.student_id')
       .join('users as u', 'u.id', 's.user_id')
       .join('schedules as sch', 'sch.id', 'ar.schedule_id')
       .join('subjects as sub', 'sub.id', 'sch.subject_id');
-    
-    // Aplicar filtro de escola (usando alias 'ar' para attendance_records)
+
     query = applySchoolFilter(query, user, 'ar');
-    
+
     query = query.select('ar.*', 'u.first_name', 'u.last_name', 's.student_number', 'sub.name as subject_name');
 
+    if (filters._student_ids) query.whereIn('ar.student_id', filters._student_ids);
+    else if (filters.student_id) query.where('ar.student_id', filters.student_id);
     if (filters.class_id) {
       query.join('classes as c', 'c.id', 'sch.class_id').where('sch.class_id', filters.class_id);
     }
     if (filters.date) query.where('ar.date', filters.date);
     if (filters.status) query.where('ar.status', filters.status);
-    if (filters.student_id) query.where('ar.student_id', filters.student_id);
 
     let countQuery = db('attendance_records as ar');
     countQuery = applySchoolFilter(countQuery, user, 'ar');
+    if (filters._student_ids) countQuery.whereIn('ar.student_id', filters._student_ids);
+    else if (filters.student_id) countQuery.where('ar.student_id', filters.student_id);
     const [{ count }] = await countQuery.count('ar.id as count');
     const records = await query.orderBy('ar.date', 'desc').limit(limit).offset(offset);
     return { records, meta: buildPaginationMeta(Number(count), page, limit) };

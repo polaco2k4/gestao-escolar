@@ -88,7 +88,7 @@ export class FinanceiroController {
   async bulkCreateStudentFees(req: AuthRequest, res: Response) {
     try {
       const { fee_type_id, academic_year_id, class_id } = req.body;
-      const fees = await service.bulkCreateStudentFees(fee_type_id, academic_year_id, class_id);
+      const fees = await service.bulkCreateStudentFees(fee_type_id, academic_year_id, class_id, req.user);
       return sendSuccess(res, fees, `${fees.length} propinas criadas`, 201);
     } catch (error: any) {
       return sendError(res, error.message, error.statusCode || 500);

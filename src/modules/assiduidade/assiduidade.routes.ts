@@ -9,7 +9,7 @@ const controller = new AssiduidadeController();
 router.use(authenticate);
 
 router.get('/justifications', authorize('admin', 'gestor', 'professor'), controller.listJustifications);
-router.post('/justifications', authorize('encarregado', 'estudante'), controller.submitJustification);
+router.post('/justifications', authorize('admin', 'gestor', 'professor'), controller.submitJustification);
 router.put('/justifications/:id/review', authorize('admin', 'gestor', 'professor'), controller.reviewJustification);
 router.delete('/justifications/:id', authorize('admin', 'gestor', 'professor'), controller.deleteJustification);
 

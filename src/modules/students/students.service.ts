@@ -277,6 +277,20 @@ export class StudentsService {
     }
   }
 
+  async toggleActive(id: string) {
+    const student = await db('students as s')
+      .join('users as u', 'u.id', 's.user_id')
+      .select('s.user_id', 'u.active')
+      .where('s.id', id)
+      .first();
+
+    if (!student) throw new AppError('Estudante não encontrado', 404);
+
+    const newActive = !student.active;
+    await db('users').where('id', student.user_id).update({ active: newActive, updated_at: new Date() });
+    return { active: newActive };
+  }
+
   async delete(id: string) {
     const trx = await db.transaction();
 

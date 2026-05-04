@@ -6,6 +6,7 @@ import morgan from 'morgan';
 import dotenv from 'dotenv';
 
 import { globalLimiter } from './middleware/rateLimiter';
+import { enforceReadOnly } from './middleware/readOnlyRoles';
 import { errorHandler, notFoundHandler } from './middleware/errorHandler';
 
 import authRoutes from './modules/auth/auth.routes';
@@ -49,6 +50,7 @@ app.use(express.urlencoded({ extended: true }));
 app.use('/uploads', express.static('uploads'));
 
 app.use(globalLimiter);
+app.use(enforceReadOnly);
 
 app.get('/health', (_req, res) => {
   res.json({ status: 'ok', timestamp: new Date().toISOString() });

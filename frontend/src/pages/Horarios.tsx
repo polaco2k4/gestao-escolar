@@ -5,8 +5,11 @@ import teachersService from '../services/teachers.service';
 import academicYearsService from '../services/academicYears.service';
 import type { Schedule, Class, Subject, Room } from '../services/horarios.service';
 import { useAlert } from '../hooks/useAlert';
+import { useAuth } from '../contexts/AuthContext';
 
 export default function Horarios() {
+  const { user } = useAuth();
+  const canEdit = user?.role !== 'estudante' && user?.role !== 'encarregado';
   const { showAlert, showConfirm, showSuccess, showError, AlertComponent } = useAlert();
   const [schedules, setSchedules] = useState<Schedule[]>([]);
   const [classes, setClasses] = useState<Class[]>([]);
@@ -248,16 +251,18 @@ export default function Horarios() {
           <h1 className="text-3xl font-bold text-gray-900">Horários</h1>
           <p className="mt-2 text-sm text-gray-700">Gestão de horários escolares</p>
         </div>
-        <button
-          onClick={() => {
-            resetForm();
-            setShowModal(true);
-          }}
-          className="inline-flex items-center px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-blue-600 hover:bg-blue-700"
-        >
-          <Plus className="h-5 w-5 mr-2" />
-          Novo Horário
-        </button>
+        {canEdit && (
+          <button
+            onClick={() => {
+              resetForm();
+              setShowModal(true);
+            }}
+            className="inline-flex items-center px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-blue-600 hover:bg-blue-700"
+          >
+            <Plus className="h-5 w-5 mr-2" />
+            Novo Horário
+          </button>
+        )}
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
@@ -378,20 +383,22 @@ export default function Horarios() {
                           </div>
                         </div>
                       </div>
-                      <div className="flex items-center space-x-2 ml-4">
-                        <button
-                          onClick={() => handleEdit(schedule)}
-                          className="text-blue-600 hover:text-blue-800"
-                        >
-                          <Edit2 className="h-4 w-4" />
-                        </button>
-                        <button
-                          onClick={() => handleDelete(schedule.id)}
-                          className="text-red-600 hover:text-red-800"
-                        >
-                          <Trash2 className="h-4 w-4" />
-                        </button>
-                      </div>
+                      {canEdit && (
+                        <div className="flex items-center space-x-2 ml-4">
+                          <button
+                            onClick={() => handleEdit(schedule)}
+                            className="text-blue-600 hover:text-blue-800"
+                          >
+                            <Edit2 className="h-4 w-4" />
+                          </button>
+                          <button
+                            onClick={() => handleDelete(schedule.id)}
+                            className="text-red-600 hover:text-red-800"
+                          >
+                            <Trash2 className="h-4 w-4" />
+                          </button>
+                        </div>
+                      )}
                     </div>
                   </div>
                 ))}
