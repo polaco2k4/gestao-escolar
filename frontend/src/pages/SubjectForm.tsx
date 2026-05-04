@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useNavigate, useParams, Link } from 'react-router-dom';
 import subjectsService from '../services/subjects.service';
+import coursesService, { type Course } from '../services/courses.service';
 import { useAuth } from '../contexts/AuthContext';
 
 export default function SubjectForm() {
@@ -16,11 +17,14 @@ export default function SubjectForm() {
     description: '',
     credits: 1,
     year_level: 1,
+    course_id: '',
   });
+  const [courses, setCourses] = useState<Course[]>([]);
   const [loading, setLoading] = useState(false);
   const [saving, setSaving] = useState(false);
 
   useEffect(() => {
+    coursesService.list().then(setCourses).catch(() => {});
     if (isEditing) {
       loadSubject();
     }
@@ -36,6 +40,7 @@ export default function SubjectForm() {
         description: data.description || '',
         credits: data.credits,
         year_level: data.year_level,
+        course_id: data.course_id || '',
       });
     } catch (error) {
       console.error('Erro ao carregar disciplina:', error);
@@ -50,10 +55,11 @@ export default function SubjectForm() {
 
     try {
       setSaving(true);
+      const data = handleSubmitData();
       if (isEditing) {
-        await subjectsService.update(id!, formData);
+        await subjectsService.update(id!, data);
       } else {
-        await subjectsService.create(formData);
+        await subjectsService.create(data as any);
       }
       navigate('/subjects');
     } catch (error: any) {
@@ -70,6 +76,11 @@ export default function SubjectForm() {
       ...prev,
       [name]: name === 'credits' || name === 'year_level' ? parseInt(value) || 0 : value,
     }));
+  };
+
+  const handleSubmitData = () => {
+    const { course_id, ...rest } = formData;
+    return course_id ? formData : rest;
   };
 
   if (loading) {
@@ -141,6 +152,26 @@ export default function SubjectForm() {
               className={`w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 ${!canEdit && isEditing ? 'bg-gray-100 cursor-not-allowed' : ''}`}
               placeholder="Descrição da disciplina..."
             />
+          </div>
+
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">
+              Curso
+            </label>
+            <select
+              name="course_id"
+              value={formData.course_id}
+              onChange={handleChange}
+              disabled={!canEdit && isEditing}
+              className={`w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 ${!canEdit && isEditing ? 'bg-gray-100 cursor-not-allowed' : ''}`}
+            >
+              <option value="">Sem curso associado</option>
+              {courses.map((course) => (
+                <option key={course.id} value={course.id}>
+                  {course.name}
+                </option>
+              ))}
+            </select>
           </div>
 
           <div className="grid grid-cols-2 gap-4">

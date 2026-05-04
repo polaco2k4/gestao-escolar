@@ -4,13 +4,20 @@ import { applySchoolFilter, canAccessSchool } from '../../middleware/schoolSegre
 import { AuthPayload } from '../../middleware/auth';
 
 export class SubjectsService {
-  async list(user?: AuthPayload) {
-    let query = db('subjects').select('*');
-    
-    // Aplicar filtro de escola
-    query = applySchoolFilter(query, user);
-    
-    const subjects = await query.orderBy('name', 'asc');
+  async list(user?: AuthPayload, filters?: { course_id?: string }) {
+    let query = db('subjects as s')
+      .leftJoin('courses as c', 'c.id', 's.course_id')
+      .select('s.*', 'c.name as course_name');
+
+    query = applySchoolFilter(query, user, 's');
+
+    if (filters?.course_id) {
+      query = query.where((builder: any) =>
+        builder.where('s.course_id', filters.course_id).orWhereNull('s.course_id')
+      );
+    }
+
+    const subjects = await query.orderBy('s.name', 'asc');
     return subjects;
   }
 

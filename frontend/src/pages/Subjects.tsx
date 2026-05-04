@@ -3,20 +3,36 @@ import { Link } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
 import { Eye } from 'lucide-react';
 import subjectsService, { type Subject } from '../services/subjects.service';
+import coursesService, { type Course } from '../services/courses.service';
 
 export default function Subjects() {
   const { user } = useAuth();
   const [subjects, setSubjects] = useState<Subject[]>([]);
+  const [courses, setCourses] = useState<Course[]>([]);
+  const [courseFilter, setCourseFilter] = useState('');
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    loadData();
+    loadCourses();
   }, []);
+
+  useEffect(() => {
+    loadData();
+  }, [courseFilter]);
+
+  const loadCourses = async () => {
+    try {
+      const data = await coursesService.list();
+      setCourses(data);
+    } catch (error) {
+      console.error('Erro ao carregar cursos:', error);
+    }
+  };
 
   const loadData = async () => {
     try {
       setLoading(true);
-      const data = await subjectsService.list();
+      const data = await subjectsService.list(courseFilter ? { course_id: courseFilter } : undefined);
       setSubjects(data);
     } catch (error) {
       console.error('Erro ao carregar disciplinas:', error);
@@ -51,6 +67,36 @@ export default function Subjects() {
         )}
       </div>
 
+      {/* Filtro por Curso */}
+      <div className="bg-white rounded-lg shadow px-6 py-4">
+        <div className="flex items-center gap-4">
+          <label className="text-sm font-medium text-gray-700 whitespace-nowrap">Filtrar por Curso</label>
+          <select
+            value={courseFilter}
+            onChange={(e) => setCourseFilter(e.target.value)}
+            className="w-64 px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+          >
+            <option value="">Todos os cursos</option>
+            {courses.map((course) => (
+              <option key={course.id} value={course.id}>
+                {course.name}
+              </option>
+            ))}
+          </select>
+          {courseFilter && (
+            <button
+              onClick={() => setCourseFilter('')}
+              className="text-sm text-gray-500 hover:text-gray-800 underline"
+            >
+              Limpar filtro
+            </button>
+          )}
+          <span className="ml-auto text-sm text-gray-500">
+            {subjects.length} disciplina{subjects.length !== 1 ? 's' : ''}
+          </span>
+        </div>
+      </div>
+
       <div className="bg-white rounded-lg shadow p-6">
         {loading ? (
           <div className="text-center py-12">
@@ -59,7 +105,9 @@ export default function Subjects() {
           </div>
         ) : subjects.length === 0 ? (
           <div className="text-center py-12">
-            <p className="text-gray-600">Nenhuma disciplina encontrada</p>
+            <p className="text-gray-600">
+              {courseFilter ? 'Nenhuma disciplina encontrada para este curso' : 'Nenhuma disciplina encontrada'}
+            </p>
           </div>
         ) : (
           <div className="overflow-x-auto">
@@ -71,6 +119,9 @@ export default function Subjects() {
                   </th>
                   <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                     Nome
+                  </th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    Curso
                   </th>
                   <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                     Créditos
@@ -90,9 +141,16 @@ export default function Subjects() {
                       {subject.code}
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap">
-                      <div className="text-sm font-medium text-gray-900">
-                        {subject.name}
-                      </div>
+                      <div className="text-sm font-medium text-gray-900">{subject.name}</div>
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                      {subject.course_name ? (
+                        <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-blue-50 text-blue-700 border border-blue-200">
+                          {subject.course_name}
+                        </span>
+                      ) : (
+                        <span className="text-gray-400">—</span>
+                      )}
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
                       {subject.credits}
